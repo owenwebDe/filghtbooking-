@@ -1,0 +1,120 @@
+# FlightBooking - Complete Project .gitignore
+
+# === FRONTEND (Next.js) ===
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+frontend/.vercel/
+frontend/*.tsbuildinfo
+
+# === BACKEND (FastAPI/Python) ===
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.Python
+backend/env/
+backend/venv/
+backend/.venv/
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.env
+backend/.env.local
+backend/.env.production
+backend/instance/
+backend/.webassets-cache
+backend/uploads/
+backend/logs/
+
+# === ADMIN PANEL (React) ===
+admin-panel/node_modules/
+admin-panel/.next/
+admin-panel/build/
+admin-panel/dist/
+admin-panel/.env*.local
+admin-panel/.cache/
+admin-panel/coverage/
+
+# === DATABASE ===
+*.db
+*.sqlite
+*.sqlite3
+mongodb_data/
+postgres_data/
+
+# === DOCKER ===
+.dockerignore
+docker-compose.override.yml
+
+# === ENVIRONMENT & SECRETS ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+config.local.js
+secrets.json
+
+# === LOGS ===
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# === MISC ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.AppleDouble
+.LSOverride
+Icon?
+
+# === TEMPORARY ===
+tmp/
+temp/
+.tmp/
+.cache/
+dist/
+
+# === DEPLOYMENT ===
+.vercel/
+.netlify/
+.firebase/
+
+# === TESTING ===
+coverage/
+.nyc_output/
+.jest/
+
+# === CERTIFICATES ===
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# === BACKUP ===
+*.bak
+*.backup
+backup/
