@@ -102,4 +102,20 @@ export const paymentsAPI = {
   refund: (id: string, amount?: number) => apiClient.post(`/payments/${id}/refund`, { amount }),
 };
 
+export const walletAPI = {
+  getWallet: () => apiClient.get('/wallet/'),
+  deposit: (data: { amount: number, payment_method_id: string }) => 
+    apiClient.post('/wallet/deposit', data),
+  withdraw: (data: { amount: number, payment_method_id: string }) => 
+    apiClient.post('/wallet/withdraw', data),
+  getTransactions: () => apiClient.get('/wallet/transactions'),
+  addPaymentMethod: (data: any) => apiClient.post('/wallet/payment-methods', data),
+  getPaymentMethods: () => apiClient.get('/wallet/payment-methods'),
+  getRewards: () => apiClient.get('/wallet/rewards'),
+  redeemReward: (rewardId: string) => apiClient.post(`/wallet/rewards/${rewardId}/redeem`),
+  earnPoints: (data: { booking_id: string, amount: number }) => 
+    apiClient.post('/wallet/points/earn', data),
+  getTiers: () => apiClient.get('/wallet/tiers'),
+};
+
 export default apiClient;

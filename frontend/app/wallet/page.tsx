@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth-simple';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Footer from '../../components/Footer';
-import { paymentsAPI, bookingsAPI } from '../../lib/api';
+import { walletAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
 import {
   WalletIcon,
@@ -42,6 +42,9 @@ export default function WalletPage() {
     totalPoints: 0
   });
   const [transactions, setTransactions] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  const [membershipTiers, setMembershipTiers] = useState([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -59,50 +62,35 @@ export default function WalletPage() {
       setLoading(true);
       console.log('💳 Loading wallet data from backend...');
       
-      // Try to load payment history and bookings to calculate wallet stats
-      const [paymentsResponse, bookingsResponse] = await Promise.all([
-        paymentsAPI.getMyPayments().catch(() => ({ data: [] })),
-        bookingsAPI.getMyBookings().catch(() => ({ data: [] }))
+      // Load all wallet data from backend APIs
+      const [
+        walletResponse,
+        transactionsResponse, 
+        paymentMethodsResponse,
+        rewardsResponse,
+        tiersResponse
+      ] = await Promise.all([
+        walletAPI.getWallet().catch(() => ({ data: null })),
+        walletAPI.getTransactions().catch(() => ({ data: [] })),
+        walletAPI.getPaymentMethods().catch(() => ({ data: [] })),
+        walletAPI.getRewards().catch(() => ({ data: [] })),
+        walletAPI.getTiers().catch(() => ({ data: [] }))
       ]);
       
-      const payments = paymentsResponse.data || [];
-      const bookings = bookingsResponse.data || [];
-      
-      if (payments.length > 0 || bookings.length > 0) {
-        // Calculate wallet statistics from real data
-        const totalSpent = bookings.reduce((sum, booking) => sum + (booking.total_amount || 0), 0);
-        const totalPayments = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-        const calculatedPoints = Math.floor(totalSpent / 2); // 1 point per $2 spent
-        const calculatedCashback = totalSpent * 0.03; // 3% cashback for Gold tier
-        
-        // Transform payments to transaction format
-        const paymentTransactions = payments.map((payment, index) => ({
-          id: payment.id || `payment-${index}`,
-          type: payment.amount > 0 ? 'deposit' : 'booking',
-          description: payment.description || 'Payment transaction',
-          amount: payment.amount || 0,
-          points: Math.floor(Math.abs(payment.amount || 0) / 2),
-          date: payment.created_at || new Date().toISOString(),
-          status: payment.status || 'completed'
-        }));
-        
-        // Calculate wallet balance (simplified - would be more complex in real app)
-        const calculatedBalance = totalPayments - totalSpent;
-        
+      // Set wallet data from backend
+      if (walletResponse.data) {
+        const wallet = walletResponse.data;
         setWalletData({
-          balance: Math.max(calculatedBalance, 0),
-          points: calculatedPoints,
-          cashback: calculatedCashback,
-          tier: calculatedPoints >= 15000 ? 'Gold Member' : calculatedPoints >= 5000 ? 'Silver Member' : 'Bronze Member',
-          nextTierPoints: calculatedPoints >= 15000 ? 30000 - calculatedPoints : calculatedPoints >= 5000 ? 15000 - calculatedPoints : 5000 - calculatedPoints,
-          totalPoints: calculatedPoints
+          balance: wallet.balance || 0,
+          points: wallet.points || 0,
+          cashback: wallet.cashback || 0,
+          tier: wallet.current_tier || 'Bronze Member',
+          nextTierPoints: wallet.points_to_next_tier || 5000,
+          totalPoints: wallet.total_points_earned || 0
         });
-        
-        setTransactions(paymentTransactions.slice(0, 10)); // Show last 10 transactions
-        
-        console.log(`✅ Calculated wallet data - Balance: $${calculatedBalance}, Points: ${calculatedPoints}`);
+        console.log('✅ Loaded wallet data from backend:', wallet);
       } else {
-        // No payment/booking data - show empty state
+        // Wallet not found, create default
         setWalletData({
           balance: 0,
           points: 0,
@@ -111,13 +99,35 @@ export default function WalletPage() {
           nextTierPoints: 5000,
           totalPoints: 0
         });
-        setTransactions([]);
-        console.log('📝 No wallet data found for user');
+        console.log('📝 No wallet found, using defaults');
       }
+      
+      // Set transactions from backend
+      const transactions = transactionsResponse.data || [];
+      setTransactions(transactions.slice(0, 20)); // Show last 20 transactions
+      
+      // Set payment methods from backend
+      const paymentMethods = paymentMethodsResponse.data || [];
+      setPaymentMethods(paymentMethods);
+      
+      // Set rewards from backend
+      const rewards = rewardsResponse.data || [];
+      setRewards(rewards);
+      
+      // Set membership tiers from backend
+      const tiers = tiersResponse.data || [];
+      setMembershipTiers(tiers.length > 0 ? tiers : [
+        { name: 'Bronze', pointsRequired: 0, benefits: ['1% Cashback', 'Basic Support'], color: 'bg-orange-100 text-orange-800', current: true },
+        { name: 'Silver', pointsRequired: 5000, benefits: ['2% Cashback', 'Priority Support'], color: 'bg-gray-100 text-gray-800', current: false },
+        { name: 'Gold', pointsRequired: 15000, benefits: ['3% Cashback', 'Free Upgrades', 'Lounge Access'], color: 'bg-yellow-100 text-yellow-800', current: false },
+        { name: 'Platinum', pointsRequired: 30000, benefits: ['5% Cashback', 'Concierge Service', 'Premium Support'], color: 'bg-purple-100 text-purple-800', current: false }
+      ]);
       
     } catch (error) {
       console.error('Error loading wallet data:', error);
-      // API failed - show empty state with error message
+      toast.error('Failed to load wallet data. Please check your connection and try again.');
+      
+      // Set default empty state
       setWalletData({
         balance: 0,
         points: 0,
@@ -127,48 +137,70 @@ export default function WalletPage() {
         totalPoints: 0
       });
       setTransactions([]);
-      toast.error('Failed to load wallet data. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const membershipTiers = [
-    { name: 'Bronze', pointsRequired: 0, benefits: ['1% Cashback', 'Basic Support'], color: 'bg-orange-100 text-orange-800', current: false },
-    { name: 'Silver', pointsRequired: 5000, benefits: ['2% Cashback', 'Priority Support'], color: 'bg-gray-100 text-gray-800', current: false },
-    { name: 'Gold', pointsRequired: 15000, benefits: ['3% Cashback', 'Free Upgrades', 'Lounge Access'], color: 'bg-yellow-100 text-yellow-800', current: true },
-    { name: 'Platinum', pointsRequired: 30000, benefits: ['5% Cashback', 'Concierge Service', 'Premium Support'], color: 'bg-purple-100 text-purple-800', current: false }
-  ];
-
-  const rewards = [
-    { id: 1, name: 'Airport Lounge Access', points: 2500, description: 'One-time access to premium airport lounges', category: 'Travel' },
-    { id: 2, name: '$50 Travel Credit', points: 5000, description: 'Credit towards your next booking', category: 'Credits' },
-    { id: 3, name: 'Hotel Upgrade Voucher', points: 3500, description: 'Free room upgrade at partner hotels', category: 'Hotels' },
-    { id: 4, name: 'Priority Check-in', points: 1500, description: 'Skip the lines with priority check-in', category: 'Services' },
-    { id: 5, name: '$100 Cash Bonus', points: 10000, description: 'Direct cash bonus to your wallet', category: 'Cash' },
-    { id: 6, name: 'Free Seat Selection', points: 1000, description: 'Free seat selection on any flight', category: 'Flight' }
-  ];
-
-  const paymentMethods = [
-    { id: 1, type: 'card', name: 'Visa ****1234', icon: '💳', primary: true },
-    { id: 2, type: 'card', name: 'Mastercard ****5678', icon: '💳', primary: false },
-    { id: 3, type: 'bank', name: 'Bank Transfer', icon: '🏦', primary: false },
-    { id: 4, type: 'paypal', name: 'PayPal Account', icon: '💙', primary: false }
-  ];
 
   const handleAddFunds = async () => {
     if (addAmount && parseFloat(addAmount) > 0) {
       try {
-        // In a real app, this would integrate with payment processing
-        toast.success(`Adding $${addAmount} to your wallet...`);
-        setShowAddFunds(false);
-        setAddAmount('');
-        // Reload wallet data after adding funds
-        await loadWalletData();
+        const amount = parseFloat(addAmount);
+        
+        // For now, use default payment method or first available
+        const defaultPaymentMethod = paymentMethods.find(pm => pm.is_primary) || 
+                                    paymentMethods[0] || 
+                                    { id: 'default' };
+        
+        toast.loading('Processing deposit...');
+        
+        const response = await walletAPI.deposit({
+          amount: amount,
+          payment_method_id: defaultPaymentMethod.id
+        });
+        
+        if (response.status === 200 || response.status === 201) {
+          toast.dismiss();
+          toast.success(`Successfully added $${amount} to your wallet!`);
+          setShowAddFunds(false);
+          setAddAmount('');
+          // Reload wallet data to show updated balance
+          await loadWalletData();
+        } else {
+          throw new Error('Deposit failed');
+        }
       } catch (error) {
+        toast.dismiss();
         console.error('Error adding funds:', error);
-        toast.error('Failed to add funds. Please try again.');
+        toast.error('Failed to add funds. Please try again or contact support.');
       }
+    }
+  };
+
+  const handleRedeemReward = async (rewardId: string, rewardName: string, pointsCost: number) => {
+    try {
+      if (walletData.points < pointsCost) {
+        toast.error('Insufficient points for this reward');
+        return;
+      }
+
+      toast.loading('Redeeming reward...');
+      
+      const response = await walletAPI.redeemReward(rewardId);
+      
+      if (response.status === 200 || response.status === 201) {
+        toast.dismiss();
+        toast.success(`Successfully redeemed ${rewardName}!`);
+        // Reload wallet data to show updated points
+        await loadWalletData();
+      } else {
+        throw new Error('Redemption failed');
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error('Error redeeming reward:', error);
+      toast.error('Failed to redeem reward. Please try again.');
     }
   };
 
@@ -488,6 +520,7 @@ export default function WalletPage() {
                       <span className="font-bold text-purple-600">{reward.points.toLocaleString()} points</span>
                     </div>
                     <button 
+                      onClick={() => handleRedeemReward(reward.id, reward.name, reward.points)}
                       className={`px-4 py-2 rounded-lg font-medium transition-all ${
                         walletData.points >= reward.points
                           ? 'bg-purple-600 hover:bg-purple-700 text-white'
