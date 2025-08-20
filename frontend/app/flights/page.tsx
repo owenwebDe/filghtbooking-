@@ -2,15 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import Footer from '../../components/Footer';
+import BookingModal from '../../components/BookingModal';
 import { flightsAPI } from '../../lib/api';
-import { realFlightAPI, DUBAI_AIRPORTS, POPULAR_DESTINATIONS_FROM_DUBAI, formatAEDCurrency } from '../../lib/travel-apis';
+import { realFlightAPI, DUBAI_LOCATIONS, formatAEDCurrency } from '../../lib/travel-apis';
 import { 
   MagnifyingGlassIcon,
   PaperAirplaneIcon,
+  MapPinIcon,
   ClockIcon,
   UserGroupIcon,
-  CurrencyDollarIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+  GlobeAltIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -43,17 +48,18 @@ interface Flight {
 const FlightsPage: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSearchResult, setIsSearchResult] = useState(false); // Track if showing search results
-  const [currentSearch, setCurrentSearch] = useState<string>(''); // Track current search route
+  const [isSearchResult, setIsSearchResult] = useState(false);
+  const [currentSearch, setCurrentSearch] = useState<string>('');
   const [searchParams, setSearchParams] = useState({
-    from: 'DXB', // Default to Dubai International Airport
+    from: 'DXB',
     to: '',
     departure_date: '',
     return_date: '',
     passengers: '1',
     trip_type: 'one-way'
   });
-  const [airportSuggestions, setAirportSuggestions] = useState<any[]>([]);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -63,9 +69,8 @@ const FlightsPage: React.FC = () => {
   const loadFlights = async () => {
     try {
       setLoading(true);
-      console.log('🛫 Loading popular flights from backend...');
       
-      // Try to get popular flights from backend first
+      // Try backend API first
       try {
         const backendFlights = await realFlightAPI.getPopularFlights();
         if (backendFlights && backendFlights.length > 0) {
@@ -141,7 +146,6 @@ const FlightsPage: React.FC = () => {
         setCurrentSearch('Popular Routes (Live)');
         console.log(`✅ Loaded ${allRealFlights.length} real flights from external APIs`);
       } else {
-        // No flights found at all
         setFlights([]);
         setIsSearchResult(false);
         setCurrentSearch('');
@@ -271,9 +275,8 @@ const FlightsPage: React.FC = () => {
   };
 
   const handleBookFlight = (flight: Flight) => {
-    // Store flight data and redirect to booking
-    localStorage.setItem('selected_flight', JSON.stringify(flight));
-    router.push(`/booking/flight/${flight.id}`);
+    setSelectedFlight(flight);
+    setShowBookingModal(true);
   };
 
   const formatDuration = (flight: Flight) => {
@@ -287,7 +290,6 @@ const FlightsPage: React.FC = () => {
   };
 
   const formatTime = (timeString: string) => {
-    // Handle both ISO datetime strings and simple time strings
     if (timeString.includes('T') || timeString.includes(':')) {
       if (timeString.includes('T')) {
         return new Date(timeString).toLocaleTimeString('en-US', {
@@ -295,20 +297,10 @@ const FlightsPage: React.FC = () => {
           minute: '2-digit'
         });
       } else {
-        return timeString; // Already in HH:MM format
+        return timeString;
       }
     }
     return timeString;
-  };
-
-  const formatDate = (dateString: string) => {
-    if (dateString && dateString.includes('T')) {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      });
-    }
-    return 'Today'; // Default for our sample data
   };
 
   const getAirportCode = (flight: Flight, type: 'departure' | 'arrival') => {
@@ -328,114 +320,116 @@ const FlightsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       
-      {/* Modern Header with Yellow Theme */}
-      <div className="bg-gradient-to-r from-white via-yellow-50 to-white py-16 relative overflow-hidden">
-        <div className="absolute top-10 left-20 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float"></div>
-        <div className="absolute bottom-10 right-20 w-40 h-40 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      {/* Modern Hero Header with Red Theme */}
+      <div className="relative hero-gradient py-20 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-red-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-red-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-float floating-element"></div>
         
         <div className="max-w-7xl mx-auto mobile-container relative z-10">
-          <div className="text-center">
-            <h1 className="mobile-heading text-5xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
-              Find Your Perfect 
-              <span className="text-yellow-600">Flight</span>
+          <div className="text-center animate-fade-in">
+            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
+              <SparklesIcon className="h-5 w-5 mr-2" />
+              Premium Flight Booking Experience
+            </div>
+            <h1 className="mobile-heading text-5xl md:text-7xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
+              Discover Your Next 
+              <span className="gradient-text-red block">Adventure</span>
             </h1>
-            <p className="mobile-text text-xl text-gray-600 font-medium max-w-2xl mx-auto">
-              ✈️ Search and book flights to destinations worldwide with real-time prices
+            <p className="mobile-text text-xl text-gray-600 font-medium max-w-2xl mx-auto animate-slide-up">
+              ✈️ Explore the world with premium flights and unbeatable prices
             </p>
           </div>
         </div>
       </div>
 
       {/* Modern Search Form */}
-      <div className="max-w-7xl mx-auto mobile-container -mt-12">
-        <div className="glass-card mobile-card-perfect yellow-shadow">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex flex-wrap gap-2 mb-4">
-              <label className="inline-flex items-center">
+      <div className="max-w-7xl mx-auto mobile-container -mt-16 relative z-20">
+        <div className="glass-card mobile-card-perfect red-shadow animate-scale-in" style={{animationDelay: '0.3s'}}>
+          <form onSubmit={handleSearch} className="space-y-6">
+            <div className="flex flex-wrap gap-4 mb-6">
+              <label className="inline-flex items-center cursor-pointer group">
                 <input
                   type="radio"
                   value="one-way"
                   checked={searchParams.trip_type === 'one-way'}
                   onChange={(e) => setSearchParams({...searchParams, trip_type: e.target.value})}
-                  className="form-radio text-blue-600"
+                  className="form-radio text-red-600 h-5 w-5"
                 />
-                <span className="ml-2">One way</span>
+                <span className="ml-3 font-semibold text-gray-700 group-hover:text-red-600 transition-colors">One way</span>
               </label>
-              <label className="inline-flex items-center ml-4">
+              <label className="inline-flex items-center cursor-pointer group">
                 <input
                   type="radio"
                   value="round-trip"
                   checked={searchParams.trip_type === 'round-trip'}
                   onChange={(e) => setSearchParams({...searchParams, trip_type: e.target.value})}
-                  className="form-radio text-blue-600"
+                  className="form-radio text-red-600 h-5 w-5"
                 />
-                <span className="ml-2">Round trip</span>
+                <span className="ml-3 font-semibold text-gray-700 group-hover:text-red-600 transition-colors">Round trip</span>
               </label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-                <select
-                  value={searchParams.from}
-                  onChange={(e) => setSearchParams({...searchParams, from: e.target.value})}
-                  className="input-field"
-                >
-                  <option value="">Select departure airport</option>
-                  {Object.values(DUBAI_AIRPORTS).map(airport => (
-                    <option key={airport.code} value={airport.code}>
-                      {airport.code} - {airport.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">From</label>
+                <div className="relative">
+                  <PaperAirplaneIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <input
+                    type="text"
+                    placeholder="Departure city (e.g. DXB)"
+                    value={searchParams.from}
+                    onChange={(e) => setSearchParams({...searchParams, from: e.target.value})}
+                    className="input-field pl-12 hover:shadow-red-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">To</label>
+                <div className="relative">
+                  <MapPinIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <input
+                    type="text"
+                    placeholder="Destination city (e.g. LHR)"
+                    value={searchParams.to}
+                    onChange={(e) => setSearchParams({...searchParams, to: e.target.value})}
+                    className="input-field pl-12 hover:shadow-red-500/20"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-                <select
-                  value={searchParams.to}
-                  onChange={(e) => setSearchParams({...searchParams, to: e.target.value})}
-                  className="input-field"
-                >
-                  <option value="">Select destination</option>
-                  {POPULAR_DESTINATIONS_FROM_DUBAI.map(dest => (
-                    <option key={dest.code} value={dest.code}>
-                      {dest.code} - {dest.city}, {dest.country}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Departure</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Departure</label>
                 <input
                   type="date"
                   value={searchParams.departure_date}
                   onChange={(e) => setSearchParams({...searchParams, departure_date: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 />
               </div>
 
               {searchParams.trip_type === 'round-trip' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Return</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Return</label>
                   <input
                     type="date"
                     value={searchParams.return_date}
                     onChange={(e) => setSearchParams({...searchParams, return_date: e.target.value})}
-                    className="input-field"
+                    className="input-field hover:shadow-red-500/20"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Passengers</label>
                 <select
                   value={searchParams.passengers}
                   onChange={(e) => setSearchParams({...searchParams, passengers: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 >
                   {[1,2,3,4,5,6,7,8].map(num => (
                     <option key={num} value={num}>{num} {num === 1 ? 'passenger' : 'passengers'}</option>
@@ -444,14 +438,14 @@ const FlightsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary btn-mobile-perfect flex items-center space-x-3 text-lg shadow-2xl yellow-glow"
+                className="btn-primary btn-mobile-perfect btn-glow flex items-center space-x-3 text-lg shadow-2xl red-glow btn-press"
               >
                 <MagnifyingGlassIcon className="h-6 w-6" />
-                <span>{loading ? 'Searching... ✈️' : 'Search Flights ✈️'}</span>
+                <span>{loading ? 'Searching Flights... ✈️' : 'Search Flights ✈️'}</span>
               </button>
             </div>
           </form>
@@ -460,132 +454,122 @@ const FlightsPage: React.FC = () => {
 
       {/* Modern Flight Results */}
       <div className="max-w-7xl mx-auto mobile-container section-spacing">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Available Flights</h2>
+        <div className="text-center mb-12 animate-fade-in">
+          <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Available Flights</h2>
           
           {isSearchResult && currentSearch && (
-            <div className="glass-card inline-flex items-center space-x-4 px-6 py-3 mb-4">
-              <p className="text-sm text-gray-700 font-medium">Search results for: <span className="text-yellow-600 font-bold">{currentSearch}</span></p>
+            <div className="glass-card inline-flex items-center space-x-4 px-6 py-3 mb-6 red-shadow animate-scale-in">
+              <p className="text-sm text-gray-700 font-medium">Search results for: <span className="gradient-text-red font-bold">{currentSearch}</span></p>
               <button
                 onClick={() => {
                   setIsSearchResult(false);
                   setCurrentSearch('');
                   loadFlights();
                 }}
-                className="btn-outline px-4 py-1 text-xs"
+                className="btn-outline px-4 py-1 text-xs hover-lift"
               >
                 Clear search
               </button>
             </div>
           )}
           
-          {!isSearchResult && (
-            <p className="text-gray-600 font-medium mb-4">Popular routes from Dubai</p>
-          )}
-          
-          <div className="inline-flex items-center bg-yellow-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-            🛫 Real-time via Amadeus API
+          <div className="inline-flex items-center bg-red-100 text-gray-900 px-6 py-3 rounded-full text-sm font-bold shadow-lg red-shadow">
+            ✈️ Premium airlines with worldwide destinations
           </div>
         </div>
         
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Searching for flights...</p>
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent mx-auto"></div>
+            <p className="mt-6 text-gray-600 text-lg font-medium">Searching for flights...</p>
           </div>
         ) : flights.length === 0 ? (
-          <div className="text-center py-12">
-            <PaperAirplaneIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">No flights found. Try adjusting your search criteria.</p>
+          <div className="text-center py-16 animate-scale-in">
+            <PaperAirplaneIcon className="h-20 w-20 text-gray-400 mx-auto mb-6" />
+            <p className="text-gray-600 text-xl font-medium">No flights found. Try adjusting your search criteria.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {flights.map((flight) => (
-              <div key={flight.id} className="glass-card mobile-card card-hover yellow-shadow">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-8">
-                    {/* Airline & Flight Number */}
-                    <div>
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-                          <PaperAirplaneIcon className="h-4 w-4 text-gray-900" />
+            {flights.map((flight, index) => (
+              <div key={flight.id} className="glass-card mobile-card card-hover red-shadow group animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-6 lg:space-y-0">
+                  {/* Flight Info */}
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 red-gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg animate-pulse-red">
+                          {flight.airline.substring(0, 2).toUpperCase()}
                         </div>
-                        <span className="font-bold text-gray-900 text-lg">{flight.airline}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-700 mb-1">{flight.flight_number}</p>
-                      <p className="text-xs text-gray-500 mb-1">{flight.aircraft || flight.aircraft_type || 'Commercial Aircraft'}</p>
-                      {flight.class && (
-                        <div className="inline-block bg-yellow-100 text-gray-900 px-2 py-1 rounded-full text-xs font-bold">
-                          {flight.class}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Route & Times */}
-                    <div className="md:col-span-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">{formatTime(flight.departure_time)}</p>
-                          <p className="text-sm text-gray-600">{getAirportCode(flight, 'departure')}</p>
-                          <p className="text-xs text-gray-500">{getAirportCity(flight, 'departure')}</p>
-                        </div>
-                        
-                        <div className="flex-1 mx-4">
-                          <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                              <div className="w-full border-t border-gray-300"></div>
-                            </div>
-                            <div className="relative flex justify-center">
-                              <span className="bg-white px-2 text-xs text-gray-500 flex items-center">
-                                <ClockIcon className="h-3 w-3 mr-1" />
-                                {formatDuration(flight)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">{formatTime(flight.arrival_time)}</p>
-                          <p className="text-sm text-gray-600">{getAirportCode(flight, 'arrival')}</p>
-                          <p className="text-xs text-gray-500">{getAirportCity(flight, 'arrival')}</p>
+                        <div>
+                          <h3 className="text-xl font-black text-gray-900">{flight.airline}</h3>
+                          <p className="gradient-text-red font-bold">{flight.flight_number}</p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Price & Seats */}
-                    <div className="text-center lg:text-right">
-                      <div className="mb-3">
-                        <div className="text-yellow-600 text-3xl font-black mb-1">
+                      <div className="text-right">
+                        <div className="text-3xl font-black gradient-text-red">
                           {formatAEDCurrency(flight.price)}
                         </div>
-                        <p className="text-xs text-gray-500 font-medium">per person</p>
+                        <p className="text-sm text-gray-600 font-medium">per person</p>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-center lg:justify-end space-x-2 text-sm">
-                          <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <UserGroupIcon className="h-2.5 w-2.5 text-gray-900" />
+                    </div>
+
+                    {/* Route and Times */}
+                    <div className="flex items-center justify-between subtle-red-gradient rounded-2xl p-6 hover-lift">
+                      <div className="text-center">
+                        <div className="text-2xl font-black text-gray-900">{formatTime(flight.departure_time)}</div>
+                        <div className="text-lg font-bold text-red-600">{getAirportCode(flight, 'departure')}</div>
+                        <div className="text-sm text-gray-600">{getAirportCity(flight, 'departure')}</div>
+                      </div>
+                      
+                      <div className="flex-1 flex items-center justify-center space-x-4">
+                        <div className="h-px bg-red-300 flex-1"></div>
+                        <div className="bg-white p-3 rounded-full shadow-lg red-shadow">
+                          <div className="text-center">
+                            <ClockIcon className="h-5 w-5 text-red-500 mx-auto mb-1" />
+                            <div className="text-sm font-bold text-gray-700">{formatDuration(flight)}</div>
                           </div>
-                          <span className="font-semibold text-gray-700">{flight.available_seats} seats left</span>
                         </div>
-                        {flight.stops !== undefined && (
-                          <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
-                            {flight.stops === 0 ? '✓ Direct flight' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
-                          </div>
-                        )}
-                        {flight.baggage && (
-                          <p className="text-xs text-gray-600 font-medium bg-gray-100 px-2 py-1 rounded-full">{flight.baggage}</p>
-                        )}
+                        <div className="h-px bg-red-300 flex-1"></div>
                       </div>
+                      
+                      <div className="text-center">
+                        <div className="text-2xl font-black text-gray-900">{formatTime(flight.arrival_time)}</div>
+                        <div className="text-lg font-bold text-red-600">{getAirportCode(flight, 'arrival')}</div>
+                        <div className="text-sm text-gray-600">{getAirportCity(flight, 'arrival')}</div>
+                      </div>
+                    </div>
+
+                    {/* Flight Details */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full border border-red-200 hover-lift">
+                        <GlobeAltIcon className="h-4 w-4 text-red-500" />
+                        <span className="font-bold text-gray-700">{flight.aircraft || flight.aircraft_type || 'Boeing 777'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full border border-red-200 hover-lift">
+                        <UserGroupIcon className="h-4 w-4 text-red-500" />
+                        <span className="font-bold text-gray-700">{flight.available_seats} seats available</span>
+                      </div>
+                      {flight.stops !== undefined && (
+                        <div className="flex items-center space-x-2 bg-green-100 px-4 py-2 rounded-full border border-green-200">
+                          <CheckCircleIcon className="h-4 w-4 text-green-600" />
+                          <span className="font-bold text-green-700">
+                            {flight.stops === 0 ? 'Direct flight' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Book Button */}
-                  <div className="mt-6 lg:mt-0 lg:ml-6">
+                  <div className="lg:ml-8">
                     <button
                       onClick={() => handleBookFlight(flight)}
-                      className="btn-primary w-full lg:w-auto px-8 py-4 text-lg font-bold shadow-2xl yellow-glow"
+                      className="btn-primary px-8 py-4 text-lg font-bold shadow-2xl red-glow w-full lg:w-auto hover-lift btn-press group"
                     >
-                      Book Flight ✈️
+                      <span className="flex items-center justify-center space-x-2">
+                        <span>Book Flight</span>
+                        <ArrowRightIcon className="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -596,6 +580,14 @@ const FlightsPage: React.FC = () => {
       </div>
 
       <Footer />
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        item={selectedFlight}
+        itemType="flight"
+      />
     </div>
   );
 };

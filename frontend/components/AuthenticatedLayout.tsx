@@ -20,13 +20,16 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
     '/dashboard',
     '/bookings',
     '/profile',
-    '/wallet',
     '/referral',
     '/franchise'
   ];
 
+  // Define routes that should NOT use sidebar (clean layout)
+  const noSidebarRoutes = ['/wallet'];
+
   // Check if current route is a protected route
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isNoSidebarRoute = noSidebarRoutes.some(route => pathname.startsWith(route));
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -38,12 +41,21 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
   }
 
   // If user is not authenticated OR on public pages, show regular navbar
-  if (!user || !isProtectedRoute) {
+  if (!user || (!isProtectedRoute && !isNoSidebarRoute)) {
     return (
       <>
         {!pathname.startsWith('/login') && !pathname.startsWith('/register') && <Navbar />}
         {children}
       </>
+    );
+  }
+
+  // If user is authenticated AND on no-sidebar route, show clean layout without sidebar
+  if (user && isNoSidebarRoute) {
+    return (
+      <div className="min-h-screen">
+        {children}
+      </div>
     );
   }
 

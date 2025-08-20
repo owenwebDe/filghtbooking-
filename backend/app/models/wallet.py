@@ -4,6 +4,12 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
+class DepositRequest(BaseModel):
+    amount: float = Field(..., gt=0, description="Amount to deposit")
+
+class ConfirmDepositRequest(BaseModel):
+    payment_intent_id: str = Field(..., description="Stripe payment intent ID")
+
 class TransactionType(str, Enum):
     DEPOSIT = "deposit"
     WITHDRAWAL = "withdrawal"

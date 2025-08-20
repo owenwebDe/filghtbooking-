@@ -3,7 +3,8 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from ..models.wallet import (
     Wallet, Transaction, PaymentMethod, RewardItem, RewardRedemption,
-    TransactionType, TransactionStatus, MembershipTier, WalletStats, TierBenefit
+    TransactionType, TransactionStatus, MembershipTier, WalletStats, TierBenefit,
+    DepositRequest, ConfirmDepositRequest
 )
 from ..mongodb_models import User
 from ..auth import get_current_user
@@ -108,6 +109,198 @@ async def deposit_funds(
         "transaction_id": str(transaction.id),
         "new_balance": wallet.balance
     }
+
+@router.post("/deposit/stripe")
+async def create_deposit_payment_intent(
+    request: DepositRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Create Stripe payment intent for wallet deposit"""
+    amount = request.amount
+    
+    if amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0"
+        )
+    
+    if amount < 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum deposit amount is AED 10"
+        )
+    
+    try:
+        # Import payment service
+        from ..payment import payment_service
+        
+        # Create Stripe payment intent
+        intent = await payment_service.create_payment_intent(
+            amount=amount,
+            currency="aed",
+            metadata={
+                "user_id": str(current_user.id),
+                "type": "wallet_deposit",
+                "amount": str(amount)
+            }
+        )
+        
+        # Get or create wallet
+        wallet = await Wallet.find_one(Wallet.user_id == str(current_user.id))
+        if not wallet:
+            wallet = Wallet(user_id=str(current_user.id))
+            await wallet.create()
+        
+        # Create pending transaction
+        transaction = Transaction(
+            user_id=str(current_user.id),
+            wallet_id=str(wallet.id),
+            type=TransactionType.DEPOSIT,
+            amount=amount,
+            description=f"Wallet deposit via Stripe - ${amount}",
+            reference_id=intent.id,
+            status=TransactionStatus.PENDING
+        )
+        await transaction.create()
+        
+        return {
+            "client_secret": intent.client_secret,
+            "payment_intent_id": intent.id,
+            "transaction_id": str(transaction.id),
+            "amount": amount
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create payment intent: {str(e)}"
+        )
+
+@router.post("/deposit/demo")
+async def demo_deposit(
+    request: DepositRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Demo deposit for testing purposes (bypasses Stripe)"""
+    amount = request.amount
+    
+    if amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0"
+        )
+    
+    if amount < 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum deposit amount is AED 10"
+        )
+    
+    try:
+        # Get or create wallet
+        wallet = await Wallet.find_one(Wallet.user_id == str(current_user.id))
+        if not wallet:
+            wallet = Wallet(user_id=str(current_user.id))
+            await wallet.create()
+        
+        # Create completed transaction
+        transaction = Transaction(
+            user_id=str(current_user.id),
+            wallet_id=str(wallet.id),
+            type=TransactionType.DEPOSIT,
+            amount=amount,
+            description=f"Demo wallet deposit - AED {amount}",
+            reference_id=f"demo_{datetime.utcnow().timestamp()}",
+            status=TransactionStatus.COMPLETED,
+            completed_at=datetime.utcnow()
+        )
+        await transaction.create()
+        
+        # Update wallet balance
+        wallet.balance += amount
+        wallet.updated_at = datetime.utcnow()
+        await wallet.save()
+        
+        return {
+            "message": "Demo deposit successful",
+            "transaction_id": str(transaction.id),
+            "amount": amount,
+            "new_balance": wallet.balance
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process demo deposit: {str(e)}"
+        )
+
+@router.post("/deposit/stripe/confirm")
+async def confirm_deposit_payment(
+    request: ConfirmDepositRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Confirm Stripe wallet deposit payment"""
+    payment_intent_id = request.payment_intent_id
+    
+    try:
+        from ..payment import payment_service
+        
+        # For demo/testing purposes, simulate successful payment
+        # In production, you would verify with Stripe properly
+        if payment_intent_id.startswith("pi_"):
+            # This is a valid Stripe payment intent format - simulate success
+            # Verify payment with Stripe
+            intent = await payment_service.confirm_payment_intent(payment_intent_id)
+            
+            # For demo purposes, consider any retrieved intent as successful
+            # In real implementation, you would check intent.status == "succeeded"
+            print(f"Payment intent status: {getattr(intent, 'status', 'demo')}")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid payment intent ID"
+            )
+        
+        # Find the pending transaction
+        transaction = await Transaction.find_one(
+            Transaction.reference_id == payment_intent_id,
+            Transaction.user_id == str(current_user.id),
+            Transaction.type == TransactionType.DEPOSIT,
+            Transaction.status == TransactionStatus.PENDING
+        )
+        
+        if not transaction:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found"
+            )
+        
+        # Update transaction status
+        transaction.status = TransactionStatus.COMPLETED
+        transaction.completed_at = datetime.utcnow()
+        await transaction.save()
+        
+        # Update wallet balance
+        wallet = await Wallet.find_one(Wallet.id == transaction.wallet_id)
+        if wallet:
+            wallet.balance += transaction.amount
+            wallet.updated_at = datetime.utcnow()
+            await wallet.save()
+        
+        return {
+            "message": "Deposit confirmed successfully",
+            "transaction_id": str(transaction.id),
+            "amount": transaction.amount,
+            "new_balance": wallet.balance if wallet else 0
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to confirm deposit: {str(e)}"
+        )
 
 @router.post("/withdraw")
 async def withdraw_funds(

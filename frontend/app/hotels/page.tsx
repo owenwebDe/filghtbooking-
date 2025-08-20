@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Footer from '../../components/Footer';
+import BookingModal from '../../components/BookingModal';
 import { hotelsAPI } from '../../lib/api';
 import { realHotelAPI, DUBAI_LOCATIONS, formatAEDCurrency } from '../../lib/travel-apis';
 import { 
@@ -10,12 +11,14 @@ import {
   MapPinIcon,
   StarIcon,
   UserGroupIcon,
-  CurrencyDollarIcon,
   CalendarDaysIcon,
   WifiIcon,
   HomeIcon,
   TruckIcon,
-  SwatchIcon
+  SwatchIcon,
+  SparklesIcon,
+  ArrowRightIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
@@ -44,6 +47,8 @@ const HotelsPage: React.FC = () => {
     guests: '2',
     rooms: '1'
   });
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -203,10 +208,8 @@ const HotelsPage: React.FC = () => {
   };
 
   const handleBookHotel = (hotel: Hotel) => {
-    // Store hotel data and redirect to booking
-    localStorage.setItem('selected_hotel', JSON.stringify(hotel));
-    localStorage.setItem('hotel_search_params', JSON.stringify(searchParams));
-    router.push(`/booking/hotel/${hotel.id}`);
+    setSelectedHotel(hotel);
+    setShowBookingModal(true);
   };
 
   const renderStars = (rating: number) => {
@@ -250,18 +253,24 @@ const HotelsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       
-      {/* Modern Header with Yellow Theme */}
-      <div className="bg-gradient-to-r from-white via-yellow-50 to-white py-16 relative overflow-hidden">
-        <div className="absolute top-10 left-20 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float"></div>
-        <div className="absolute bottom-10 right-20 w-40 h-40 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      {/* Modern Header with Red Theme */}
+      <div className="relative hero-gradient py-20 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-red-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-red-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-float floating-element"></div>
         
         <div className="max-w-7xl mx-auto mobile-container relative z-10">
-          <div className="text-center">
-            <h1 className="mobile-heading text-5xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
+          <div className="text-center animate-fade-in">
+            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
+              <SparklesIcon className="h-5 w-5 mr-2" />
+              Luxury Hotel Booking Experience
+            </div>
+            <h1 className="mobile-heading text-5xl md:text-7xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
               Find Your Perfect 
-              <span className="text-yellow-600">Stay</span>
+              <span className="gradient-text-red block">Stay</span>
             </h1>
-            <p className="mobile-text text-xl text-gray-600 font-medium max-w-2xl mx-auto">
+            <p className="mobile-text text-xl text-gray-600 font-medium max-w-2xl mx-auto animate-slide-up">
               🏨 Discover luxury hotels and resorts with real-time availability
             </p>
           </div>
@@ -269,47 +278,50 @@ const HotelsPage: React.FC = () => {
       </div>
 
       {/* Modern Search Form */}
-      <div className="max-w-7xl mx-auto mobile-container -mt-12">
-        <div className="glass-card mobile-card-perfect yellow-shadow">
+      <div className="max-w-7xl mx-auto mobile-container -mt-16 relative z-20">
+        <div className="glass-card mobile-card-perfect red-shadow animate-scale-in" style={{animationDelay: '0.3s'}}>
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input
-                  type="text"
-                  placeholder="Where are you going?"
-                  value={searchParams.location}
-                  onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
-                  className="input-field"
-                />
+                <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
+                <div className="relative">
+                  <MapPinIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-red-500" />
+                  <input
+                    type="text"
+                    placeholder="Where are you going?"
+                    value={searchParams.location}
+                    onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
+                    className="input-field pl-12 hover:shadow-red-500/20"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Check-in</label>
                 <input
                   type="date"
                   value={searchParams.check_in}
                   onChange={(e) => setSearchParams({...searchParams, check_in: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Check-out</label>
                 <input
                   type="date"
                   value={searchParams.check_out}
                   onChange={(e) => setSearchParams({...searchParams, check_out: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Guests</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Guests</label>
                 <select
                   value={searchParams.guests}
                   onChange={(e) => setSearchParams({...searchParams, guests: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 >
                   {[1,2,3,4,5,6,7,8].map(num => (
                     <option key={num} value={num}>{num} {num === 1 ? 'guest' : 'guests'}</option>
@@ -318,11 +330,11 @@ const HotelsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rooms</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Rooms</label>
                 <select
                   value={searchParams.rooms}
                   onChange={(e) => setSearchParams({...searchParams, rooms: e.target.value})}
-                  className="input-field"
+                  className="input-field hover:shadow-red-500/20"
                 >
                   {[1,2,3,4,5].map(num => (
                     <option key={num} value={num}>{num} {num === 1 ? 'room' : 'rooms'}</option>
@@ -335,7 +347,7 @@ const HotelsPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary btn-mobile-perfect flex items-center space-x-3 text-lg shadow-2xl yellow-glow"
+                className="btn-primary btn-mobile-perfect btn-glow flex items-center space-x-3 text-lg shadow-2xl red-glow btn-press"
               >
                 <MagnifyingGlassIcon className="h-6 w-6" />
                 <span>{loading ? 'Searching... 🏨' : 'Search Hotels 🏨'}</span>
@@ -347,31 +359,31 @@ const HotelsPage: React.FC = () => {
 
       {/* Modern Hotel Results */}
       <div className="max-w-7xl mx-auto mobile-container section-spacing">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Available Hotels</h2>
-          <div className="inline-flex items-center bg-yellow-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-            🏨 Premium accommodations in Dubai
+        <div className="text-center mb-12 animate-fade-in">
+          <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Available Hotels</h2>
+          <div className="inline-flex items-center bg-red-100 text-gray-900 px-6 py-3 rounded-full text-sm font-bold shadow-lg red-shadow">
+            🏨 Premium accommodations worldwide
           </div>
         </div>
         
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Searching for hotels...</p>
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent mx-auto"></div>
+            <p className="mt-6 text-gray-600 text-lg font-medium">Searching for hotels...</p>
           </div>
         ) : hotels.length === 0 ? (
-          <div className="text-center py-12">
-            <BuildingOfficeIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">No hotels found. Try adjusting your search criteria.</p>
+          <div className="text-center py-16 animate-scale-in">
+            <BuildingOfficeIcon className="h-20 w-20 text-gray-400 mx-auto mb-6" />
+            <p className="text-gray-600 text-xl font-medium">No hotels found. Try adjusting your search criteria.</p>
           </div>
         ) : (
           <div className="space-y-8">
-            {hotels.map((hotel) => (
-              <div key={hotel.id} className="glass-card mobile-card card-hover yellow-shadow">
+            {hotels.map((hotel, index) => (
+              <div key={hotel.id} className="glass-card mobile-card card-hover red-shadow group animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
                 <div className="flex flex-col lg:flex-row">
                   {/* Hotel Image */}
                   <div className="lg:w-2/5">
-                    <div className="h-64 lg:h-full bg-gradient-to-br from-yellow-100 to-yellow-200 relative overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none">
+                    <div className="h-64 lg:h-full bg-gradient-to-br from-red-100 to-red-200 relative overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none">
                       <img
                         src={hotel.images[0] || 'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?w=500&h=500&fit=crop'}
                         alt={hotel.name}
@@ -385,7 +397,7 @@ const HotelsPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="absolute top-4 right-4">
-                        <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                        <div className="red-gradient-bg text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse-red">
                           Premium
                         </div>
                       </div>
@@ -399,14 +411,14 @@ const HotelsPage: React.FC = () => {
                         <div className="mb-4 lg:mb-0">
                           <h3 className="text-2xl lg:text-3xl font-black text-gray-900 mb-2">{hotel.name}</h3>
                           <div className="flex items-center text-gray-600 mb-3">
-                            <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center mr-2">
-                              <MapPinIcon className="h-3 w-3 text-gray-900" />
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-2">
+                              <MapPinIcon className="h-3 w-3 text-white" />
                             </div>
                             <span className="font-semibold">{hotel.location}</span>
                           </div>
                         </div>
                         <div className="text-left lg:text-right">
-                          <div className="text-yellow-600 text-3xl lg:text-4xl font-black mb-1">
+                          <div className="gradient-text-red text-3xl lg:text-4xl font-black mb-1">
                             {formatAEDCurrency(hotel.price_per_night)}
                           </div>
                           <p className="text-sm text-gray-600 font-medium">per night</p>
@@ -427,7 +439,7 @@ const HotelsPage: React.FC = () => {
                       <div className="mb-6">
                         <div className="flex flex-wrap gap-3">
                           {hotel.amenities.slice(0, 5).map((amenity, index) => (
-                            <div key={index} className="flex items-center space-x-2 bg-yellow-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-sm">
+                            <div key={index} className="flex items-center space-x-2 bg-red-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-sm hover-lift">
                               {getAmenityIcon(amenity)}
                               <span>{amenity}</span>
                             </div>
@@ -442,17 +454,20 @@ const HotelsPage: React.FC = () => {
 
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
                         <div className="flex items-center space-x-2 text-gray-700">
-                          <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <UserGroupIcon className="h-3 w-3 text-gray-900" />
+                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                            <UserGroupIcon className="h-3 w-3 text-white" />
                           </div>
                           <span className="font-semibold">{hotel.available_rooms} rooms available</span>
                         </div>
                         
                         <button
                           onClick={() => handleBookHotel(hotel)}
-                          className="btn-primary px-8 py-3 text-lg font-bold shadow-2xl yellow-glow w-full sm:w-auto"
+                          className="btn-primary px-8 py-3 text-lg font-bold shadow-2xl red-glow w-full sm:w-auto hover-lift btn-press group"
                         >
-                          Book Now 🏨
+                          <span className="flex items-center justify-center space-x-2">
+                            <span>Book Now 🏨</span>
+                            <ArrowRightIcon className="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -465,6 +480,14 @@ const HotelsPage: React.FC = () => {
       </div>
 
       <Footer />
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        item={selectedHotel}
+        itemType="hotel"
+      />
     </div>
   );
 };

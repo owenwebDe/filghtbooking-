@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth-simple';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { walletAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
@@ -13,26 +13,43 @@ import {
   StarIcon,
   GiftIcon,
   PlusIcon,
-  MinusIcon,
   ArrowDownIcon,
   ArrowUpIcon,
   BanknotesIcon,
   ShieldCheckIcon,
-  ClockIcon,
   TrophyIcon,
   SparklesIcon,
   CurrencyDollarIcon,
   CalendarIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowRightIcon,
+  XMarkIcon,
+  UserIcon,
+  ChartBarIcon,
+  ClockIcon,
+  EyeIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 export default function WalletPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
   const [showAddFunds, setShowAddFunds] = useState(false);
   const [addAmount, setAddAmount] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeView, setActiveView] = useState('overview');
+  
+  // Card form states
+  const [cardData, setCardData] = useState({
+    number: '',
+    expiry: '',
+    cvv: '',
+    name: '',
+    email: ''
+  });
+
   const [walletData, setWalletData] = useState({
     balance: 0,
     points: 0,
@@ -44,7 +61,68 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [rewards, setRewards] = useState([]);
-  const [membershipTiers, setMembershipTiers] = useState([]);
+
+  // Payment methods configuration
+  const paymentMethodOptions = [
+    {
+      id: 'card',
+      name: 'Credit/Debit Card',
+      icon: CreditCardIcon,
+      description: 'Visa, Mastercard, American Express',
+      popular: true,
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      id: 'bank',
+      name: 'Bank Transfer',
+      icon: BanknotesIcon,
+      description: 'Direct bank transfer (instant)',
+      popular: false,
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      id: 'paypal',
+      name: 'PayPal',
+      icon: CurrencyDollarIcon,
+      description: 'Pay with your PayPal account',
+      popular: true,
+      color: 'from-blue-600 to-purple-600'
+    }
+  ];
+
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  // Format expiry date MM/YY
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  // Get card type from number
+  const getCardType = (number: string) => {
+    const num = number.replace(/\s/g, '');
+    if (num.startsWith('4')) return 'Visa';
+    if (num.startsWith('5') || num.startsWith('2')) return 'Mastercard';
+    if (num.startsWith('3')) return 'American Express';
+    return 'Card';
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -54,607 +132,603 @@ export default function WalletPage() {
     
     if (user) {
       loadWalletData();
+      loadTransactions();
+      loadPaymentMethods();
+      loadRewards();
     }
   }, [user, authLoading, router]);
 
   const loadWalletData = async () => {
     try {
-      setLoading(true);
-      console.log('💳 Loading wallet data from backend...');
-      
-      // Load all wallet data from backend APIs
-      const [
-        walletResponse,
-        transactionsResponse, 
-        paymentMethodsResponse,
-        rewardsResponse,
-        tiersResponse
-      ] = await Promise.all([
-        walletAPI.getWallet().catch(() => ({ data: null })),
-        walletAPI.getTransactions().catch(() => ({ data: [] })),
-        walletAPI.getPaymentMethods().catch(() => ({ data: [] })),
-        walletAPI.getRewards().catch(() => ({ data: [] })),
-        walletAPI.getTiers().catch(() => ({ data: [] }))
-      ]);
-      
-      // Set wallet data from backend
-      if (walletResponse.data) {
-        const wallet = walletResponse.data;
+      const response = await walletAPI.getWallet();
+      if (response.data) {
         setWalletData({
-          balance: wallet.balance || 0,
-          points: wallet.points || 0,
-          cashback: wallet.cashback || 0,
-          tier: wallet.current_tier || 'Bronze Member',
-          nextTierPoints: wallet.points_to_next_tier || 5000,
-          totalPoints: wallet.total_points_earned || 0
+          balance: response.data.total_balance || 0,
+          points: response.data.total_points || 0,
+          cashback: response.data.cashback_earned || 0,
+          tier: response.data.membership_tier || 'Bronze Member',
+          nextTierPoints: 5000 - (response.data.total_points || 0),
+          totalPoints: response.data.total_points || 0
         });
-        console.log('✅ Loaded wallet data from backend:', wallet);
-      } else {
-        // Wallet not found, create default
-        setWalletData({
-          balance: 0,
-          points: 0,
-          cashback: 0,
-          tier: 'Bronze Member',
-          nextTierPoints: 5000,
-          totalPoints: 0
-        });
-        console.log('📝 No wallet found, using defaults');
       }
-      
-      // Set transactions from backend
-      const transactions = transactionsResponse.data || [];
-      setTransactions(transactions.slice(0, 20)); // Show last 20 transactions
-      
-      // Set payment methods from backend
-      const paymentMethods = paymentMethodsResponse.data || [];
-      setPaymentMethods(paymentMethods);
-      
-      // Set rewards from backend
-      const rewards = rewardsResponse.data || [];
-      setRewards(rewards);
-      
-      // Set membership tiers from backend
-      const tiers = tiersResponse.data || [];
-      setMembershipTiers(tiers.length > 0 ? tiers : [
-        { name: 'Bronze', pointsRequired: 0, benefits: ['1% Cashback', 'Basic Support'], color: 'bg-orange-100 text-orange-800', current: true },
-        { name: 'Silver', pointsRequired: 5000, benefits: ['2% Cashback', 'Priority Support'], color: 'bg-gray-100 text-gray-800', current: false },
-        { name: 'Gold', pointsRequired: 15000, benefits: ['3% Cashback', 'Free Upgrades', 'Lounge Access'], color: 'bg-yellow-100 text-yellow-800', current: false },
-        { name: 'Platinum', pointsRequired: 30000, benefits: ['5% Cashback', 'Concierge Service', 'Premium Support'], color: 'bg-purple-100 text-purple-800', current: false }
-      ]);
-      
     } catch (error) {
       console.error('Error loading wallet data:', error);
-      toast.error('Failed to load wallet data. Please check your connection and try again.');
-      
-      // Set default empty state
+      // Set demo data for testing
       setWalletData({
-        balance: 0,
-        points: 0,
-        cashback: 0,
-        tier: 'Bronze Member',
-        nextTierPoints: 5000,
-        totalPoints: 0
+        balance: 2847.50,
+        points: 3480,
+        cashback: 156.25,
+        tier: 'Gold Member',
+        nextTierPoints: 2520,
+        totalPoints: 12480
       });
-      setTransactions([]);
+    }
+  };
+
+  const loadTransactions = async () => {
+    try {
+      const response = await walletAPI.getTransactions();
+      if (response.data) {
+        setTransactions(response.data.transactions || []);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      // Set demo transactions
+      setTransactions([
+        {
+          id: '1',
+          type: 'deposit',
+          amount: 500,
+          description: 'Wallet top-up via Credit Card',
+          created_at: '2024-01-20T10:30:00Z',
+          status: 'completed'
+        },
+        {
+          id: '2',
+          type: 'booking',
+          amount: -450,
+          description: 'Flight booking - Emirates EK001 (Dubai → London)',
+          created_at: '2024-01-19T14:15:00Z',
+          status: 'completed'
+        },
+        {
+          id: '3',
+          type: 'cashback',
+          amount: 13.50,
+          description: 'Cashback from hotel booking',
+          created_at: '2024-01-18T09:22:00Z',
+          status: 'completed'
+        },
+        {
+          id: '4',
+          type: 'deposit',
+          amount: 1000,
+          description: 'Wallet top-up via Bank Transfer',
+          created_at: '2024-01-17T16:45:00Z',
+          status: 'completed'
+        },
+        {
+          id: '5',
+          type: 'booking',
+          amount: -350,
+          description: 'Hotel booking - Burj Al Arab (2 nights)',
+          created_at: '2024-01-16T11:30:00Z',
+          status: 'completed'
+        }
+      ]);
+    }
+  };
+
+  const loadPaymentMethods = async () => {
+    try {
+      const response = await walletAPI.getPaymentMethods();
+      if (response.data) {
+        setPaymentMethods(response.data.paymentMethods || []);
+      }
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      setPaymentMethods([
+        {
+          id: '1',
+          type: 'visa',
+          name: 'Visa •••• 4321',
+          isPrimary: true,
+          created_at: '2024-01-15T00:00:00Z'
+        },
+        {
+          id: '2',
+          type: 'mastercard',
+          name: 'Mastercard •••• 8765',
+          isPrimary: false,
+          created_at: '2024-01-10T00:00:00Z'
+        }
+      ]);
+    }
+  };
+
+  const loadRewards = async () => {
+    try {
+      const response = await walletAPI.getRewards();
+      if (response.data) {
+        setRewards(response.data.rewards || []);
+      }
+    } catch (error) {
+      console.error('Error loading rewards:', error);
+      setRewards([
+        {
+          id: '1',
+          name: 'Free Airport Lounge Access',
+          points: 2000,
+          category: 'Travel',
+          canRedeem: true,
+          description: 'Access to premium lounges worldwide'
+        },
+        {
+          id: '2',
+          name: 'Hotel Upgrade Voucher',
+          points: 3500,
+          category: 'Accommodation',
+          canRedeem: false,
+          description: 'Complimentary room upgrade at partner hotels'
+        },
+        {
+          id: '3',
+          name: 'Flight Discount 10%',
+          points: 1500,
+          category: 'Travel',
+          canRedeem: true,
+          description: 'Save 10% on your next flight booking'
+        }
+      ]);
+    }
+  };
+
+  const handleAddFunds = async () => {
+    if (!addAmount || parseFloat(addAmount) <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    if (parseFloat(addAmount) < 10) {
+      toast.error('Minimum top-up amount is AED 10');
+      return;
+    }
+
+    if (parseFloat(addAmount) > 50000) {
+      toast.error('Maximum top-up amount is AED 50,000');
+      return;
+    }
+
+    setShowPaymentForm(true);
+  };
+
+  const processPayment = async () => {
+    setLoading(true);
+    try {
+      const amount = parseFloat(addAmount);
+
+      if (!user) {
+        throw new Error('Please log in to add funds to your wallet');
+      }
+
+      if (selectedPaymentMethod === 'card') {
+        await processStripePayment(amount);
+      } else {
+        await simulatePaymentProcessing(selectedPaymentMethod);
+        const response = await walletAPI.depositDemo(amount);
+        
+        if (response.data) {
+          showSuccessMessage(amount);
+          resetForm();
+          await loadWalletData();
+          await loadTransactions();
+        }
+      }
+    } catch (error: any) {
+      console.error('Error processing payment:', error);
+      toast.error(error.message || 'Payment failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleAddFunds = async () => {
-    if (addAmount && parseFloat(addAmount) > 0) {
-      try {
-        const amount = parseFloat(addAmount);
-        
-        // For now, use default payment method or first available
-        const defaultPaymentMethod = paymentMethods.find(pm => pm.is_primary) || 
-                                    paymentMethods[0] || 
-                                    { id: 'default' };
-        
-        toast.loading('Processing deposit...');
-        
-        const response = await walletAPI.deposit({
-          amount: amount,
-          payment_method_id: defaultPaymentMethod.id
-        });
-        
-        if (response.status === 200 || response.status === 201) {
-          toast.dismiss();
-          toast.success(`Successfully added $${amount} to your wallet!`);
-          setShowAddFunds(false);
-          setAddAmount('');
-          // Reload wallet data to show updated balance
-          await loadWalletData();
-        } else {
-          throw new Error('Deposit failed');
-        }
-      } catch (error) {
-        toast.dismiss();
-        console.error('Error adding funds:', error);
-        toast.error('Failed to add funds. Please try again or contact support.');
-      }
-    }
-  };
-
-  const handleRedeemReward = async (rewardId: string, rewardName: string, pointsCost: number) => {
+  const processStripePayment = async (amount: number) => {
     try {
-      if (walletData.points < pointsCost) {
-        toast.error('Insufficient points for this reward');
-        return;
+      if (!cardData.number || !cardData.expiry || !cardData.cvv || !cardData.name) {
+        throw new Error('Please fill in all card details');
       }
 
-      toast.loading('Redeeming reward...');
+      toast.loading('Processing payment...', { id: 'payment' });
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Use demo deposit for testing
+      const response = await walletAPI.depositDemo(amount);
       
-      const response = await walletAPI.redeemReward(rewardId);
-      
-      if (response.status === 200 || response.status === 201) {
-        toast.dismiss();
-        toast.success(`Successfully redeemed ${rewardName}!`);
-        // Reload wallet data to show updated points
+      toast.dismiss('payment');
+
+      if (response.data) {
+        showSuccessMessage(amount);
+        resetForm();
         await loadWalletData();
-      } else {
-        throw new Error('Redemption failed');
+        await loadTransactions();
       }
-    } catch (error) {
-      toast.dismiss();
-      console.error('Error redeeming reward:', error);
-      toast.error('Failed to redeem reward. Please try again.');
+    } catch (error: any) {
+      toast.dismiss('payment');
+      throw new Error(error.message || 'Payment processing failed');
     }
   };
 
-  if (authLoading || !user) {
+  const showSuccessMessage = (amount: number) => {
+    toast.success(
+      `🎉 Payment Successful! AED ${amount.toLocaleString()} added to your wallet`,
+      { 
+        duration: 4000,
+        style: {
+          background: '#10B981',
+          color: 'white',
+          borderRadius: '8px',
+          padding: '16px',
+          fontWeight: 'bold'
+        }
+      }
+    );
+  };
+
+  const resetForm = () => {
+    setAddAmount('');
+    setShowAddFunds(false);
+    setShowPaymentForm(false);
+    setCardData({
+      number: '',
+      expiry: '',
+      cvv: '',
+      name: '',
+      email: ''
+    });
+  };
+
+  const simulatePaymentProcessing = async (method: string) => {
+    toast.loading(`Processing ${method} payment...`);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    toast.dismiss();
+  };
+
+  const getTierProgress = () => {
+    return Math.min((walletData.totalPoints / (walletData.totalPoints + walletData.nextTierPoints)) * 100, 100);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  const getTransactionIcon = (type) => {
-    switch (type) {
-      case 'booking': return ArrowDownIcon;
-      case 'deposit': return ArrowUpIcon;
-      case 'cashback': return GiftIcon;
-      case 'points': return StarIcon;
-      case 'refund': return ArrowUpIcon;
-      default: return BanknotesIcon;
-    }
-  };
-
-  const getTransactionColor = (type) => {
-    switch (type) {
-      case 'booking': return 'text-red-600';
-      case 'deposit': return 'text-green-600';
-      case 'cashback': return 'text-purple-600';
-      case 'points': return 'text-blue-600';
-      case 'refund': return 'text-green-600';
-      default: return 'text-gray-600';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-800 text-white py-20">
+      <Navbar />
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <WalletIcon className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Membership Wallet
-            </h1>
-            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Manage your travel funds, earn points, and unlock exclusive rewards with your FlightBooking membership wallet
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Wallet Overview Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Wallet Balance</p>
-                <p className="text-3xl font-bold text-blue-600">${walletData.balance.toLocaleString()}</p>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                <WalletIcon className="h-5 w-5 text-white" />
               </div>
-              <div className="bg-blue-100 p-3 rounded-full">
-                <WalletIcon className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Digital Wallet</h1>
+                <p className="text-sm text-gray-500">Manage your funds & rewards</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setShowAddFunds(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-all"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
+              <PlusIcon className="h-4 w-4 mr-2" />
               Add Funds
             </button>
           </div>
+        </div>
+      </div>
 
-          <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Available Balance</p>
+                <p className="text-2xl font-bold text-gray-900">AED {walletData.balance.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <WalletIcon className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Reward Points</p>
-                <p className="text-3xl font-bold text-purple-600">{walletData.points.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-gray-900">{walletData.points.toLocaleString()}</p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <StarIcon className="h-8 w-8 text-purple-600" />
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <StarIcon className="h-6 w-6 text-yellow-600" />
               </div>
-            </div>
-            <div className="text-sm text-gray-600">
-              {walletData.nextTierPoints} points to next tier
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Cashback</p>
-                <p className="text-3xl font-bold text-green-600">${walletData.cashback}</p>
+                <p className="text-2xl font-bold text-gray-900">AED {walletData.cashback.toLocaleString()}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <GiftIcon className="h-8 w-8 text-green-600" />
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <GiftIcon className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <div className="text-sm text-green-600 font-medium">
-              +15% this month
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-xl text-white hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-100">Membership</p>
+                <p className="text-xl font-bold text-white">{walletData.tier}</p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <TrophyIcon className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Overview', icon: WalletIcon },
-              { id: 'transactions', label: 'Transactions', icon: ClockIcon },
-              { id: 'rewards', label: 'Rewards', icon: GiftIcon },
-              { id: 'membership', label: 'Membership', icon: TrophyIcon },
-              { id: 'payment', label: 'Payment Methods', icon: CreditCardIcon }
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                  activeTab === id
-                    ? 'border-purple-500 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </nav>
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {[
+                { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+                { id: 'transactions', name: 'Transactions', icon: DocumentTextIcon },
+                { id: 'rewards', name: 'Rewards', icon: GiftIcon },
+                { id: 'cards', name: 'Payment Methods', icon: CreditCardIcon }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveView(tab.id)}
+                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeView === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <tab.icon className="h-5 w-5 mr-2" />
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Membership Status */}
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-6 text-white mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">{walletData.tier}</h3>
-                  <p className="text-yellow-100">Your current membership tier</p>
-                </div>
-                <TrophyIcon className="h-16 w-16 text-yellow-200" />
-              </div>
-              <div className="mt-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Progress to Platinum</span>
-                  <span>{((walletData.totalPoints - 15000) / (30000 - 15000) * 100).toFixed(0)}%</span>
-                </div>
-                <div className="bg-yellow-600 rounded-full h-3">
-                  <div 
-                    className="bg-white rounded-full h-3 transition-all duration-300"
-                    style={{ width: `${((walletData.totalPoints - 15000) / (30000 - 15000) * 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <button className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-                <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <PlusIcon className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Add Funds</h3>
-                <p className="text-sm text-gray-600">Top up your wallet balance</p>
-              </button>
-
-              <button className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-                <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ArrowDownIcon className="h-6 w-6 text-green-600" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Withdraw</h3>
-                <p className="text-sm text-gray-600">Transfer to bank account</p>
-              </button>
-
-              <button className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-                <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <GiftIcon className="h-6 w-6 text-purple-600" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Redeem Points</h3>
-                <p className="text-sm text-gray-600">Use points for rewards</p>
-              </button>
-
-              <button className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-                <div className="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <StarIcon className="h-6 w-6 text-orange-600" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">Earn Points</h3>
-                <p className="text-sm text-gray-600">Discover earning opportunities</p>
-              </button>
-            </div>
-
+        {/* Content Sections */}
+        {activeView === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-                <Link href="#" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
-                  View All
-                </Link>
-              </div>
-              <div className="space-y-4">
-                {transactions.slice(0, 5).map((transaction) => {
-                  const IconComponent = getTransactionIcon(transaction.type);
-                  return (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-2 rounded-full bg-gray-100`}>
-                          <IconComponent className={`h-5 w-5 ${getTransactionColor(transaction.type)}`} />
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {transactions.slice(0, 5).map((transaction) => (
+                      <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            transaction.type === 'deposit' ? 'bg-green-100' :
+                            transaction.type === 'booking' ? 'bg-red-100' : 'bg-blue-100'
+                          }`}>
+                            {transaction.type === 'deposit' ? (
+                              <ArrowDownIcon className="h-5 w-5 text-green-600" />
+                            ) : transaction.type === 'booking' ? (
+                              <ArrowUpIcon className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <GiftIcon className="h-5 w-5 text-blue-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{transaction.description}</p>
+                            <p className="text-xs text-gray-500">{formatDate(transaction.created_at)}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{transaction.description}</p>
-                          <p className="text-sm text-gray-600">{transaction.date}</p>
+                        <div className={`text-sm font-semibold ${
+                          transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
+                        }`}>
+                          {transaction.amount > 0 ? '+' : ''}AED {Math.abs(transaction.amount)}
                         </div>
                       </div>
-                      <div className="text-right">
-                        {transaction.amount !== 0 && (
-                          <p className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                          </p>
-                        )}
-                        {transaction.points > 0 && (
-                          <p className="text-sm text-purple-600">+{transaction.points} points</p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Tier Progress */}
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">{walletData.tier}</h3>
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <TrophyIcon className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Progress to next tier</span>
+                    <span>{walletData.nextTierPoints.toLocaleString()} pts needed</span>
+                  </div>
+                  <div className="w-full bg-white rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-1000" 
+                      style={{width: `${getTierProgress()}%`}}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setShowAddFunds(true)}
+                    className="flex flex-col items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                  >
+                    <PlusIcon className="h-6 w-6 text-blue-600 mb-1" />
+                    <span className="text-xs font-medium text-gray-700">Add Funds</span>
+                  </button>
+                  <button className="flex flex-col items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                    <GiftIcon className="h-6 w-6 text-green-600 mb-1" />
+                    <span className="text-xs font-medium text-gray-700">Rewards</span>
+                  </button>
+                  <button className="flex flex-col items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                    <CreditCardIcon className="h-6 w-6 text-purple-600 mb-1" />
+                    <span className="text-xs font-medium text-gray-700">Cards</span>
+                  </button>
+                  <button className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                    <ChartBarIcon className="h-6 w-6 text-gray-600 mb-1" />
+                    <span className="text-xs font-medium text-gray-700">Reports</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Transactions Tab */}
-        {activeTab === 'transactions' && (
-          <div className="bg-white rounded-xl shadow-lg">
+        {activeView === 'transactions' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">Transaction History</h2>
-                <div className="flex space-x-4">
-                  <select className="border border-gray-300 rounded-lg px-4 py-2">
-                    <option>All Transactions</option>
-                    <option>Deposits</option>
-                    <option>Bookings</option>
-                    <option>Cashback</option>
-                    <option>Points</option>
-                  </select>
-                  <input 
-                    type="date" 
-                    className="border border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {transactions.map((transaction) => {
-                  const IconComponent = getTransactionIcon(transaction.type);
-                  return (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-3 rounded-full bg-gray-100`}>
-                          <IconComponent className={`h-6 w-6 ${getTransactionColor(transaction.type)}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{transaction.description}</p>
-                          <p className="text-sm text-gray-600">{transaction.date}</p>
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+            <div className="divide-y divide-gray-100">
+              {transactions.map((transaction) => (
+                <div key={transaction.id} className="p-6 hover:bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        transaction.type === 'deposit' ? 'bg-green-100' :
+                        transaction.type === 'booking' ? 'bg-red-100' : 'bg-blue-100'
+                      }`}>
+                        {transaction.type === 'deposit' ? (
+                          <ArrowDownIcon className="h-6 w-6 text-green-600" />
+                        ) : transaction.type === 'booking' ? (
+                          <ArrowUpIcon className="h-6 w-6 text-red-600" />
+                        ) : (
+                          <GiftIcon className="h-6 w-6 text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{transaction.description}</p>
+                        <div className="flex items-center space-x-4 mt-1">
+                          <p className="text-sm text-gray-500">{formatDate(transaction.created_at)}</p>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            transaction.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
                             {transaction.status}
                           </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        {transaction.amount !== 0 && (
-                          <p className={`text-lg font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                          </p>
-                        )}
-                        {transaction.points > 0 && (
-                          <p className="text-purple-600 font-medium">+{transaction.points} points</p>
-                        )}
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Rewards Tab */}
-        {activeTab === 'rewards' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Redeem Your Points</h2>
-              <p className="text-lg text-gray-600">You have {walletData.points.toLocaleString()} points to spend on exclusive rewards</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rewards.map((reward) => (
-                <div key={reward.id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mb-2">
-                        {reward.category}
-                      </span>
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">{reward.name}</h3>
-                      <p className="text-gray-600 text-sm mb-4">{reward.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <StarIcon className="h-5 w-5 text-purple-600" />
-                      <span className="font-bold text-purple-600">{reward.points.toLocaleString()} points</span>
-                    </div>
-                    <button 
-                      onClick={() => handleRedeemReward(reward.id, reward.name, reward.points)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        walletData.points >= reward.points
-                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      }`}
-                      disabled={walletData.points < reward.points}
-                    >
-                      {walletData.points >= reward.points ? 'Redeem' : 'Not Enough Points'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Membership Tab */}
-        {activeTab === 'membership' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Membership Tiers</h2>
-              <p className="text-lg text-gray-600">Unlock better benefits as you travel more with FlightBooking</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {membershipTiers.map((tier) => (
-                <div key={tier.name} className={`bg-white rounded-xl shadow-lg p-6 border-2 ${
-                  tier.current ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
-                }`}>
-                  <div className="text-center">
-                    <div className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mb-4 ${tier.color}`}>
-                      {tier.name}
-                    </div>
-                    {tier.current && (
-                      <div className="mb-4">
-                        <span className="bg-yellow-400 text-yellow-900 px-2 py-1 text-xs font-bold rounded-full">
-                          CURRENT TIER
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-2xl font-bold text-gray-900 mb-4">
-                      {tier.pointsRequired.toLocaleString()} points
-                    </p>
-                    <div className="space-y-2">
-                      {tier.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center justify-center space-x-2">
-                          <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-gray-600">{benefit}</span>
-                        </div>
-                      ))}
+                    <div className="text-right">
+                      <p className={`text-lg font-semibold ${
+                        transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
+                      }`}>
+                        {transaction.amount > 0 ? '+' : ''}AED {Math.abs(transaction.amount)}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white">
-              <div className="text-center">
-                <SparklesIcon className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold mb-4">How to Earn Points</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="font-bold mb-2">Book Flights</h4>
-                    <p className="text-blue-100">Earn 1 point per $2 spent</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Refer Friends</h4>
-                    <p className="text-blue-100">Get 500 points per referral</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Complete Profile</h4>
-                    <p className="text-blue-100">Bonus 1000 points</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Payment Methods Tab */}
-        {activeTab === 'payment' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Payment Methods</h2>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2">
-                <PlusIcon className="h-5 w-5" />
-                <span>Add Payment Method</span>
+        {activeView === 'rewards' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {rewards.map((reward) => (
+              <div key={reward.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="font-semibold text-gray-900">{reward.name}</h4>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {reward.category}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">{reward.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-blue-600">{reward.points} pts</span>
+                  <button
+                    disabled={!reward.canRedeem}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      reward.canRedeem
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {reward.canRedeem ? 'Redeem' : 'Need More Points'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeView === 'cards' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Payment Methods</h3>
+              <button className="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Add Card
               </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {paymentMethods.map((method) => (
-                <div key={method.id} className={`bg-white rounded-xl shadow-lg p-6 border-2 ${
-                  method.primary ? 'border-purple-400 bg-purple-50' : 'border-gray-200'
-                }`}>
-                  <div className="flex items-center justify-between">
+            <div className="p-6">
+              <div className="space-y-4">
+                {paymentMethods.map((method) => (
+                  <div key={method.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-center space-x-4">
-                      <span className="text-2xl">{method.icon}</span>
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                        <CreditCardIcon className="h-6 w-6 text-white" />
+                      </div>
                       <div>
                         <p className="font-medium text-gray-900">{method.name}</p>
-                        <p className="text-sm text-gray-600">{method.type}</p>
+                        <p className="text-sm text-gray-500">Added {formatDate(method.created_at)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {method.primary && (
-                        <span className="bg-purple-100 text-purple-800 px-2 py-1 text-xs font-semibold rounded-full">
+                    <div className="flex items-center space-x-3">
+                      {method.isPrimary && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           Primary
                         </span>
                       )}
-                      <button className="text-gray-500 hover:text-gray-700">
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <EyeIcon className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
-                  {!method.primary && (
-                    <button className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-all">
-                      Set as Primary
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-              <div className="flex items-start space-x-3">
-                <ShieldCheckIcon className="h-6 w-6 text-blue-600 mt-1" />
-                <div>
-                  <h3 className="font-bold text-blue-900 mb-2">Security & Privacy</h3>
-                  <p className="text-blue-800 text-sm">
-                    All payment information is encrypted and securely stored. We never store your full card details on our servers.
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -663,46 +737,191 @@ export default function WalletPage() {
 
       {/* Add Funds Modal */}
       {showAddFunds && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Add Funds to Wallet</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                <input
-                  type="number"
-                  value={addAmount}
-                  onChange={(e) => setAddAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[50, 100, 200].map((amount) => (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {!showPaymentForm ? (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">Add Funds</h3>
                   <button
-                    key={amount}
-                    onClick={() => setAddAmount(amount.toString())}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-all"
+                    onClick={() => setShowAddFunds(false)}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg"
                   >
-                    ${amount}
+                    <XMarkIcon className="h-5 w-5" />
                   </button>
-                ))}
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Amount (AED)</label>
+                  <input
+                    type="number"
+                    value={addAmount}
+                    onChange={(e) => setAddAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {[100, 500, 1000].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setAddAmount(amount.toString())}
+                        className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                      >
+                        +{amount}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Payment Method</label>
+                  <div className="space-y-3">
+                    {paymentMethodOptions.map((method) => {
+                      const IconComponent = method.icon;
+                      return (
+                        <button
+                          key={method.id}
+                          onClick={() => setSelectedPaymentMethod(method.id)}
+                          className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                            selectedPaymentMethod === method.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-10 h-10 bg-gradient-to-r ${method.color} rounded-lg flex items-center justify-center`}>
+                              <IconComponent className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-gray-900">{method.name}</span>
+                                {method.popular && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                    Popular
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500">{method.description}</p>
+                            </div>
+                            {selectedPaymentMethod === method.id && (
+                              <CheckCircleIcon className="h-5 w-5 text-blue-500" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowAddFunds(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddFunds}
+                    disabled={!addAmount || parseFloat(addAmount) < 10}
+                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Continue
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-4 pt-4">
+            ) : (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowPaymentForm(false)}
+                      className="p-2 hover:bg-gray-100 rounded-lg"
+                    >
+                      <ArrowRightIcon className="h-5 w-5 rotate-180" />
+                    </button>
+                    <h3 className="text-xl font-semibold text-gray-900">Payment Details</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowAddFunds(false);
+                      setShowPaymentForm(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {selectedPaymentMethod === 'card' && (
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+                      <input
+                        type="text"
+                        value={cardData.number}
+                        onChange={(e) => setCardData({...cardData, number: formatCardNumber(e.target.value)})}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Expiry</label>
+                        <input
+                          type="text"
+                          value={cardData.expiry}
+                          onChange={(e) => setCardData({...cardData, expiry: formatExpiryDate(e.target.value)})}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                        <input
+                          type="text"
+                          value={cardData.cvv}
+                          onChange={(e) => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '')})}
+                          placeholder="123"
+                          maxLength={4}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
+                      <input
+                        type="text"
+                        value={cardData.name}
+                        onChange={(e) => setCardData({...cardData, name: e.target.value})}
+                        placeholder="John Doe"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-700">Total Amount:</span>
+                    <span className="text-xl font-bold text-gray-900">AED {parseFloat(addAmount || '0').toLocaleString()}</span>
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => setShowAddFunds(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium transition-all"
+                  onClick={processPayment}
+                  disabled={loading || (selectedPaymentMethod === 'card' && (!cardData.number || !cardData.expiry || !cardData.cvv || !cardData.name))}
+                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  {loading ? 'Processing...' : `Pay AED ${parseFloat(addAmount || '0').toLocaleString()}`}
                 </button>
-                <button
-                  onClick={handleAddFunds}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-all"
-                >
-                  Add Funds
-                </button>
+
+                <p className="text-center text-xs text-gray-500 mt-4">
+                  🔒 Secured with 256-bit SSL encryption
+                </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

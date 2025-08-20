@@ -20,6 +20,7 @@ flightbooking/
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
 - **Tailwind CSS** - Utility-first CSS framework
@@ -28,6 +29,7 @@ flightbooking/
 - **Responsive Sidebar** - Professional authenticated UI
 
 ### Backend
+
 - **FastAPI** - Modern Python web framework
 - **MongoDB** - NoSQL database
 - **JWT Authentication** - Secure user authentication
@@ -35,11 +37,13 @@ flightbooking/
 - **CORS** - Cross-origin resource sharing
 
 ### Admin Panel
+
 - **React** - Frontend library
 - **Material-UI** - Component library
 - **Admin Dashboard** - Management interface
 
 ### APIs & Integrations
+
 - **Amadeus Travel API** - Flight data
 - **RapidAPI** - Hotel and travel services
 - **Stripe** - Payment processing
@@ -48,6 +52,7 @@ flightbooking/
 ## 🔧 Features
 
 ### ✅ Frontend Features
+
 - **Responsive Sidebar Navigation** - Smart navigation based on authentication
 - **Real Travel APIs** - No mock data, completely API-driven
 - **User Authentication** - JWT-based login/register system
@@ -62,6 +67,7 @@ flightbooking/
 - **Mobile Responsive** - Works perfectly on all devices
 
 ### ✅ Backend Features
+
 - **RESTful API** - Complete CRUD operations
 - **Authentication & Authorization** - Secure user management
 - **Database Integration** - MongoDB with proper schemas
@@ -70,6 +76,7 @@ flightbooking/
 - **CORS Support** - Frontend-backend communication
 
 ### ✅ Admin Panel Features
+
 - **Admin Dashboard** - Overview of platform metrics
 - **User Management** - Manage all users
 - **Booking Management** - Handle all bookings
@@ -79,12 +86,14 @@ flightbooking/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Node.js** (v18 or later)
 - **Python** (v3.8 or later)
 - **MongoDB** (local or cloud)
 - **Git**
 
 ### Option 1: Docker Setup (Recommended)
+
 ```bash
 # Clone the repository
 git clone https://github.com/owenwebDe/filghtbooking-.git
@@ -102,6 +111,7 @@ docker-compose up -d
 ### Option 2: Manual Setup
 
 #### 1. Backend Setup
+
 ```bash
 cd backend
 python -m venv venv
@@ -112,10 +122,12 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Start the backend
+source venv/bin/activate
 uvicorn main:app --reload --port 8000
 ```
 
 #### 2. Frontend Setup
+
 ```bash
 cd frontend
 npm install
@@ -128,6 +140,7 @@ npm run dev
 ```
 
 #### 3. Admin Panel Setup
+
 ```bash
 cd admin-panel
 npm install
@@ -137,6 +150,7 @@ npm start
 ## 🔐 Environment Variables
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_AMADEUS_API_KEY=your_amadeus_key
@@ -145,6 +159,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_key
 ```
 
 ### Backend (.env)
+
 ```env
 MONGODB_URL=mongodb://localhost:27017/flightbooking
 SECRET_KEY=your_secret_key
@@ -156,6 +171,7 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 ## 📱 API Documentation
 
 Once the backend is running, visit:
+
 - **API Docs:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
 
@@ -170,6 +186,7 @@ Once the backend is running, visit:
 ## 🔧 Development
 
 ### Frontend Development
+
 ```bash
 cd frontend
 npm run dev          # Development server
@@ -179,6 +196,7 @@ npm run lint         # ESLint check
 ```
 
 ### Backend Development
+
 ```bash
 cd backend
 uvicorn main:app --reload    # Development server
@@ -189,16 +207,19 @@ black .                      # Code formatting
 ## 🚀 Deployment
 
 ### Frontend - Vercel (Deployed)
+
 - **Live URL:** https://frontend-gaybykh73-owens-projects-9a25e22f.vercel.app
 - **Auto-deploys** from this repository
 
 ### Backend - Deploy Options
+
 - **Heroku:** `git subtree push --prefix backend heroku main`
 - **Railway:** Connect repository and set root directory to `/backend`
 - **Digital Ocean:** Use App Platform
 - **AWS:** Use Elastic Beanstalk or ECS
 
 ### Database
+
 - **MongoDB Atlas:** Cloud MongoDB (recommended)
 - **Self-hosted:** MongoDB on VPS
 

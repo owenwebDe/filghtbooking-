@@ -69,32 +69,39 @@ export default function ReferralPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <GiftIcon className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Referral Rewards Portal
+      <div className="bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white py-20 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/15 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
+        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-white/20 rounded-full mix-blend-multiply filter blur-xl opacity-25 animate-float floating-element" style={{animationDelay: '2s'}}></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center animate-fade-in">
+            <div className="w-20 h-20 red-gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse-red shadow-2xl">
+              <GiftIcon className="h-12 w-12 text-white" />
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black mb-6 tracking-tight animate-scale-in">
+              Referral Rewards 
+              <span className="block text-yellow-300 drop-shadow-2xl">Portal</span>
             </h1>
-            <p className="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
-              Earn money by referring friends and family to FlightBooking. Get rewarded for every successful referral and booking!
+            <p className="text-xl text-red-100 max-w-3xl mx-auto mb-8 font-medium animate-slide-up">
+              💰 Earn money by referring friends and family to FlightBooking. Get rewarded for every successful referral and booking!
             </p>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-2xl mx-auto">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-100 mb-1">Your Referral Code</p>
-                  <p className="text-2xl font-bold text-yellow-400">{referralCode}</p>
+            <div className="glass-card bg-white/10 backdrop-blur-lg rounded-3xl p-8 max-w-2xl mx-auto red-shadow-lg border border-white/20 hover-lift animate-slide-up" style={{animationDelay: '0.3s'}}>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <p className="text-sm text-red-100 mb-2 font-bold">✨ Your Referral Code</p>
+                  <p className="text-3xl font-black text-yellow-300 tracking-wider">{referralCode}</p>
                 </div>
                 <button
                   onClick={copyReferralCode}
-                  className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2"
+                  className="glass-card bg-white/90 backdrop-blur-sm text-red-600 hover:bg-white px-8 py-4 rounded-2xl font-black transition-all flex items-center space-x-3 shadow-2xl hover-lift btn-press border-2 border-white/50"
                 >
-                  {copied ? <CheckCircleIcon className="h-5 w-5" /> : <DocumentDuplicateIcon className="h-5 w-5" />}
-                  <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+                  {copied ? <CheckCircleIcon className="h-6 w-6 text-green-600" /> : <DocumentDuplicateIcon className="h-6 w-6" />}
+                  <span>{copied ? '✅ Copied!' : '📋 Copy Code'}</span>
                 </button>
               </div>
             </div>
@@ -103,27 +110,28 @@ export default function ReferralPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white/95 backdrop-blur-lg shadow-2xl border-b border-red-100 sticky top-20 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+          <nav className="flex flex-wrap justify-center md:justify-start space-x-2 md:space-x-8 py-2">
             {[
-              { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon },
-              { id: 'refer', label: 'Refer Friends', icon: ShareIcon },
-              { id: 'history', label: 'Referral History', icon: UserGroupIcon },
-              { id: 'rewards', label: 'Reward Tiers', icon: TrophyIcon },
-              { id: 'earnings', label: 'Earnings', icon: CurrencyDollarIcon }
-            ].map(({ id, label, icon: Icon }) => (
+              { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon, emoji: '📊' },
+              { id: 'refer', label: 'Refer Friends', icon: ShareIcon, emoji: '🤝' },
+              { id: 'history', label: 'Referral History', icon: UserGroupIcon, emoji: '📋' },
+              { id: 'rewards', label: 'Reward Tiers', icon: TrophyIcon, emoji: '🏆' },
+              { id: 'earnings', label: 'Earnings', icon: CurrencyDollarIcon, emoji: '💰' }
+            ].map(({ id, label, icon: Icon, emoji }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                className={`py-4 px-4 md:px-6 border-b-3 font-bold text-sm flex items-center space-x-2 transition-all duration-300 hover-lift rounded-t-xl ${
                   activeTab === id
-                    ? 'border-green-500 text-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-red-500 text-red-600 bg-red-50 red-shadow'
+                    : 'border-transparent text-gray-600 hover:text-red-600 hover:border-red-300 hover:bg-red-50'
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span>{label}</span>
+                <span className="hidden md:inline">{label}</span>
+                <span className="md:hidden text-lg">{emoji}</span>
               </button>
             ))}
           </nav>
@@ -131,107 +139,130 @@ export default function ReferralPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-br from-red-50 via-white to-red-50 min-h-screen">
         
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12 animate-fade-in">
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift animate-scale-in">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Referrals</p>
-                    <p className="text-3xl font-bold text-blue-600">{userStats.totalReferrals}</p>
+                    <p className="text-sm font-bold text-gray-600 mb-2">👥 Total Referrals</p>
+                    <p className="text-4xl font-black gradient-text-red">{userStats.totalReferrals}</p>
                   </div>
-                  <UserGroupIcon className="h-10 w-10 text-blue-600" />
+                  <div className="w-16 h-16 red-gradient-bg rounded-2xl flex items-center justify-center animate-pulse-red">
+                    <UserGroupIcon className="h-8 w-8 text-white" />
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift animate-scale-in" style={{animationDelay: '0.1s'}}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Successful Bookings</p>
-                    <p className="text-3xl font-bold text-green-600">{userStats.successfulBookings}</p>
+                    <p className="text-sm font-bold text-gray-600 mb-2">✅ Successful Bookings</p>
+                    <p className="text-4xl font-black text-green-600">{userStats.successfulBookings}</p>
                   </div>
-                  <CheckCircleIcon className="h-10 w-10 text-green-600" />
+                  <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center animate-pulse">
+                    <CheckCircleIcon className="h-8 w-8 text-white" />
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift animate-scale-in" style={{animationDelay: '0.2s'}}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                    <p className="text-3xl font-bold text-purple-600">{userStats.totalEarnings}</p>
+                    <p className="text-sm font-bold text-gray-600 mb-2">💰 Total Earnings</p>
+                    <p className="text-4xl font-black gradient-text-red">{userStats.totalEarnings}</p>
                   </div>
-                  <CurrencyDollarIcon className="h-10 w-10 text-purple-600" />
+                  <div className="w-16 h-16 red-gradient-bg rounded-2xl flex items-center justify-center animate-pulse-red">
+                    <CurrencyDollarIcon className="h-8 w-8 text-white" />
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift animate-scale-in" style={{animationDelay: '0.3s'}}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Pending Rewards</p>
-                    <p className="text-3xl font-bold text-orange-600">{userStats.pendingRewards}</p>
+                    <p className="text-sm font-bold text-gray-600 mb-2">⏳ Pending Rewards</p>
+                    <p className="text-4xl font-black text-orange-600">{userStats.pendingRewards}</p>
                   </div>
-                  <SparklesIcon className="h-10 w-10 text-orange-600" />
+                  <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center animate-pulse">
+                    <SparklesIcon className="h-8 w-8 text-white" />
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-lg p-6 text-white">
+              <div className="glass-card red-gradient-bg rounded-3xl shadow-2xl p-8 text-white hover-lift animate-scale-in" style={{animationDelay: '0.4s'}}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-yellow-100">Current Level</p>
-                    <p className="text-xl font-bold">{userStats.level}</p>
+                    <p className="text-sm font-bold text-red-100 mb-2">🏆 Current Level</p>
+                    <p className="text-2xl font-black text-yellow-300">{userStats.level}</p>
                   </div>
-                  <TrophyIcon className="h-10 w-10 text-yellow-100" />
+                  <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center animate-pulse">
+                    <TrophyIcon className="h-8 w-8 text-yellow-900" />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Referrals</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slide-up">
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="w-10 h-10 red-gradient-bg rounded-xl flex items-center justify-center">
+                    <UserGroupIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900">📋 Recent Referrals</h2>
+                </div>
                 <div className="space-y-4">
-                  {referralHistory.slice(0, 5).map((referral) => (
-                    <div key={referral.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{referral.name}</p>
-                        <p className="text-sm text-gray-600">{referral.email}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">{referral.reward}</p>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          referral.status === 'Booked' ? 'bg-green-100 text-green-800' :
-                          referral.status === 'Registered' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {referral.status}
-                        </span>
+                  {referralHistory.slice(0, 5).map((referral, index) => (
+                    <div key={referral.id} className="glass-card bg-white/60 p-6 border border-red-100 rounded-2xl hover-lift animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-black text-gray-900 text-lg">{referral.name}</p>
+                          <p className="text-sm text-gray-600 font-medium">{referral.email}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-green-600 text-xl">{referral.reward}</p>
+                          <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${
+                            referral.status === 'Booked' ? 'bg-green-100 text-green-800' :
+                            referral.status === 'Registered' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {referral.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Share</h2>
+              <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg p-8 border border-red-100 hover-lift">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="w-10 h-10 red-gradient-bg rounded-xl flex items-center justify-center">
+                    <ShareIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900">🚀 Quick Share</h2>
+                </div>
                 <div className="space-y-4">
-                  {socialSharing.map((social) => (
+                  {socialSharing.map((social, index) => (
                     <button
                       key={social.platform}
                       onClick={social.platform === 'Copy Link' ? copyReferralLink : undefined}
-                      className={`w-full flex items-center justify-center space-x-3 ${social.color} hover:opacity-90 text-white py-4 rounded-lg font-semibold transition-all`}
+                      className={`w-full flex items-center justify-center space-x-3 ${social.color} hover:opacity-90 text-white py-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover-lift btn-press animate-slide-up`}
+                      style={{animationDelay: `${index * 0.1}s`}}
                     >
                       <social.icon className="h-6 w-6" />
                       <span>{social.text}</span>
                     </button>
                   ))}
                 </div>
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">Your referral link:</p>
-                  <p className="text-xs text-gray-500 break-all bg-white p-2 rounded border">
+                <div className="mt-8 glass-card bg-red-50 p-6 rounded-2xl border border-red-200">
+                  <p className="text-sm font-bold text-red-700 mb-3">🔗 Your referral link:</p>
+                  <p className="text-sm text-gray-700 break-all glass-card bg-white/80 p-4 rounded-xl border border-red-100 font-mono">
                     https://flightbooking.com/register?ref={referralCode}
                   </p>
                 </div>
@@ -274,8 +305,8 @@ export default function ReferralPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-xl p-8 text-white text-center">
-              <h3 className="text-2xl font-bold mb-4">Ready to Start Earning?</h3>
+            <div className="glass-card red-gradient-bg rounded-3xl p-10 text-white text-center shadow-2xl border border-red-300 hover-lift animate-scale-in">
+              <h3 className="text-3xl font-black mb-6">🚀 Ready to Start Earning?</h3>
               <p className="text-lg mb-6">Copy your referral code and start sharing with your network today!</p>
               <div className="bg-white/20 backdrop-blur-md rounded-lg p-4 mb-6">
                 <p className="text-sm mb-2">Your Referral Code</p>
@@ -283,7 +314,7 @@ export default function ReferralPage() {
                   <span className="text-2xl font-bold text-yellow-300">{referralCode}</span>
                   <button
                     onClick={copyReferralCode}
-                    className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all"
+                    className="bg-white text-red-600 hover:bg-red-50 px-6 py-3 rounded-2xl font-black transition-all hover-lift shadow-lg"
                   >
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
@@ -306,7 +337,7 @@ export default function ReferralPage() {
 
         {/* Referral History Tab */}
         {activeTab === 'history' && (
-          <div className="bg-white rounded-xl shadow-lg">
+          <div className="glass-card bg-white/80 backdrop-blur-sm rounded-3xl red-shadow-lg border border-red-100 animate-fade-in">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Referral History</h2>
@@ -412,7 +443,7 @@ export default function ReferralPage() {
               ))}
             </div>
 
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white">
+            <div className="glass-card red-gradient-bg rounded-3xl p-10 text-white shadow-2xl border border-red-300 animate-scale-in hover-lift">
               <div className="text-center">
                 <TrophyIcon className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
                 <h3 className="text-2xl font-bold mb-4">Exclusive Platinum Benefits</h3>

@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Performance optimizations
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
   swcMinify: true,
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -69,10 +65,6 @@ const nextConfig = {
     }
     
     return config;
-  },
-  experimental: {
-    esmExternals: 'loose',
-    serverComponentsExternalPackages: ['undici']
   }
 }
 

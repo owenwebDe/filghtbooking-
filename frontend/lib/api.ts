@@ -106,6 +106,12 @@ export const walletAPI = {
   getWallet: () => apiClient.get('/wallet/'),
   deposit: (data: { amount: number, payment_method_id: string }) => 
     apiClient.post('/wallet/deposit', data),
+  depositStripe: (amount: number) => 
+    apiClient.post('/wallet/deposit/stripe', { amount }),
+  depositDemo: (amount: number) => 
+    apiClient.post('/wallet/deposit/demo', { amount }),
+  confirmDepositStripe: (payment_intent_id: string) => 
+    apiClient.post('/wallet/deposit/stripe/confirm', { payment_intent_id }),
   withdraw: (data: { amount: number, payment_method_id: string }) => 
     apiClient.post('/wallet/withdraw', data),
   getTransactions: () => apiClient.get('/wallet/transactions'),
