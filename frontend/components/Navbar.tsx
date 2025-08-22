@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../lib/auth-simple';
 import { useRouter } from 'next/navigation';
 import { 
@@ -36,14 +37,20 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-20">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3 group hover-lift">
-              <div className="relative red-gradient-bg rounded-xl p-2 shadow-lg red-glow animate-pulse-red">
-                <AirplaneIcon className="h-8 w-8 text-white group-hover:text-red-100 transition-colors duration-300" />
+              <div className="relative rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Image 
+                  src="/logo.png" 
+                  alt="TripyVerse Logo" 
+                  width={48} 
+                  height={48}
+                  className="rounded-xl group-hover:scale-105 transition-transform duration-300"
+                />
               </div>
               <div>
-                <span className="text-2xl font-black text-gray-900 group-hover:text-red-600 transition-colors">
-                  FlightBooking
+                <span className="text-2xl font-black gradient-text-red group-hover:scale-105 transition-transform">
+                  TripyVerse
                 </span>
-                <div className="text-xs text-red-600 font-bold">Premium Travel Experience</div>
+                <div className="text-xs text-red-600 font-bold">Your Ultimate Travel Universe</div>
               </div>
             </Link>
           </div>
@@ -76,6 +83,10 @@ const Navbar: React.FC = () => {
                   Referral
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 red-gradient-bg group-hover:w-full transition-all duration-300"></span>
                 </Link>
+                <Link href="/membership" className="text-gray-700 hover:text-red-600 transition-colors font-bold relative group hover-lift">
+                  Club
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 red-gradient-bg group-hover:w-full transition-all duration-300"></span>
+                </Link>
                 <Link href="/wallet" className="text-gray-700 hover:text-red-600 transition-colors font-bold relative group hover-lift">
                   Wallet
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 red-gradient-bg group-hover:w-full transition-all duration-300"></span>
@@ -89,7 +100,7 @@ const Navbar: React.FC = () => {
                   My Trips
                 </Link>
                 <div className="relative group">
-                  <button className="flex items-center space-x-2 glass-card bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl transition-all red-shadow hover-lift">
+                  <button className="flex items-center space-x-2 glass-card bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl transition-all red-shadow hover-lift">
                     <div className="w-8 h-8 red-gradient-bg rounded-full flex items-center justify-center animate-pulse-red">
                       <UserIcon className="h-4 w-4 text-white" />
                     </div>
@@ -117,8 +128,8 @@ const Navbar: React.FC = () => {
                 <Link href="/login" className="text-gray-700 hover:text-red-600 transition-colors font-bold hover-lift">
                   Sign In
                 </Link>
-                <Link href="/register" className="btn-primary px-6 py-3 text-sm font-bold shadow-2xl red-glow hover-lift btn-press">
-                  Get Started
+                <Link href="/register" className="px-6 py-3 text-sm font-bold shadow-2xl red-glow hover-lift btn-press bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-2xl transition-all duration-300 transform hover:scale-105">
+                  Join Universe
                 </Link>
               </div>
             )}
@@ -164,6 +175,9 @@ const Navbar: React.FC = () => {
                   <Link href="/referral" className="block px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold hover-lift">
                     🎁 Referral Program
                   </Link>
+                  <Link href="/membership" className="block px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold hover-lift">
+                    👑 Club Membership
+                  </Link>
                   <Link href="/wallet" className="block px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold hover-lift">
                     💳 Membership Wallet
                   </Link>
@@ -191,8 +205,8 @@ const Navbar: React.FC = () => {
                   <Link href="/login" className="block px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold hover-lift">
                     🔐 Sign In
                   </Link>
-                  <Link href="/register" className="block px-4 py-3 btn-primary text-white font-bold rounded-xl transition-all mx-2 text-center shadow-xl red-glow hover-lift btn-press">
-                    🚀 Get Started
+                  <Link href="/register" className="block px-4 py-3 text-white font-bold rounded-xl transition-all mx-2 text-center shadow-xl red-glow hover-lift btn-press bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
+                    🌟 Join TripyVerse
                   </Link>
                 </>
               )}

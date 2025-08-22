@@ -20,6 +20,12 @@ class Settings:
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
     STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
     
+    # Flight API Configuration
+    FLIGHT_API_USER_ID = os.getenv("FLIGHT_API_USER_ID")
+    FLIGHT_API_PASSWORD = os.getenv("FLIGHT_API_PASSWORD")
+    FLIGHT_API_ACCESS = os.getenv("FLIGHT_API_ACCESS", "Test")  # "Test" or "Production"
+    FLIGHT_API_IP_ADDRESS = os.getenv("FLIGHT_API_IP_ADDRESS", "127.0.0.1")
+    
     # CORS
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
     ADMIN_URL = os.getenv("ADMIN_URL", "http://localhost:3001")

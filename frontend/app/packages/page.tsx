@@ -153,10 +153,6 @@ const PackagesPage: React.FC = () => {
         
         <div className="max-w-7xl mx-auto mobile-container relative z-10">
           <div className="text-center animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Premium Vacation Packages
-            </div>
             <h1 className="mobile-heading text-5xl md:text-7xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
               Amazing Vacation 
               <span className="gradient-text-red block">Packages</span>
@@ -171,7 +167,7 @@ const PackagesPage: React.FC = () => {
       {/* Modern Search Form */}
       <div className="max-w-7xl mx-auto mobile-container -mt-16 relative z-20">
         <div className="glass-card mobile-card-perfect red-shadow animate-scale-in" style={{animationDelay: '0.3s'}}>
-          <form onSubmit={handleSearch} className="space-y-4">
+          <form onSubmit={handleSearch} className="space-y-4 p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Destination</label>
@@ -249,9 +245,6 @@ const PackagesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto mobile-container section-spacing">
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Featured Vacation Packages</h2>
-          <div className="inline-flex items-center bg-red-100 text-gray-900 px-6 py-3 rounded-full text-sm font-bold shadow-lg red-shadow">
-            📦 Curated experiences worldwide
-          </div>
         </div>
         
         {loading ? (

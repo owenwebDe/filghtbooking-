@@ -1,6 +1,6 @@
 {
-  "name": "flight-booking-frontend",
-  "version": "0.1.0",
+  "name": "tripyverse-frontend",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -38,7 +38,7 @@
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   },
-  "description": "Next.js React frontend for the flight booking platform.",
+  "description": "TripyVerse - Next.js React frontend for the ultimate travel universe platform.",
   "main": "next.config.js",
   "directories": {
     "lib": "lib"

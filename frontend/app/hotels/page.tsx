@@ -3,11 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Footer from '../../components/Footer';
 import BookingModal from '../../components/BookingModal';
-import { hotelsAPI } from '../../lib/api';
-import { realHotelAPI, DUBAI_LOCATIONS, formatAEDCurrency } from '../../lib/travel-apis';
+import { tripyverseAPI, Hotel, HotelSearchParams, formatTripyverseCurrency } from '../../lib/tripyverse-api';
 import { 
   MagnifyingGlassIcon,
-  BuildingOfficeIcon,
+  BuildingOffice2Icon,
   MapPinIcon,
   StarIcon,
   UserGroupIcon,
@@ -15,110 +14,108 @@ import {
   WifiIcon,
   HomeIcon,
   TruckIcon,
-  SwatchIcon,
   SparklesIcon,
   ArrowRightIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  GlobeAltIcon,
+  ShieldCheckIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-interface Hotel {
-  id: string;
-  name: string;
-  location: string;
-  address: string;
-  description: string;
-  price_per_night: number;
-  available_rooms: number;
-  amenities: string[];
-  rating: number;
-  images: string[];
-}
-
 const HotelsPage: React.FC = () => {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchParams, setSearchParams] = useState({
-    location: '',
-    check_in: '',
-    check_out: '',
-    guests: '2',
-    rooms: '1'
+  const [isSearchResult, setIsSearchResult] = useState(false);
+  const [currentSearch, setCurrentSearch] = useState<string>('');
+  const [searchParams, setSearchParams] = useState<HotelSearchParams>({
+    city_name: 'Mumbai',
+    country_name: 'India',
+    check_in_date: '',
+    check_out_date: '',
+    rooms: [
+      {
+        adults: 2,
+        children: 0
+      }
+    ],
+    nationality: 'IN',
+    currency: 'USD',
+    max_result: 25
   });
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [searchMetadata, setSearchMetadata] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    loadHotels();
+    loadPopularHotels();
   }, []);
 
-  const loadHotels = async () => {
+  const loadPopularHotels = async () => {
     try {
       setLoading(true);
       
-      // Try backend API first
-      try {
-        const response = await realHotelAPI.getPopularHotels();
-        if (response && response.length > 0) {
-          setHotels(response);
-          console.log(`✅ Loaded ${response.length} hotels from backend`);
-          return;
-        }
-      } catch (backendError) {
-        console.log('⚠️ Backend hotels not available, trying external APIs...');
-      }
+      // Load popular destinations with real TravelNext API
+      const popularDestinations = [
+        { city: 'Mumbai', country: 'India' },
+        { city: 'Delhi', country: 'India' },
+        { city: 'Bangalore', country: 'India' }
+      ];
       
-      // Try external API for Dubai hotels
-      try {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const dayAfter = new Date();
-        dayAfter.setDate(dayAfter.getDate() + 2);
-        
-        const checkIn = tomorrow.toISOString().split('T')[0];
-        const checkOut = dayAfter.toISOString().split('T')[0];
-        
-        const dubaiHotels = await realHotelAPI.searchDubaiHotels({
-          checkIn,
-          checkOut,
-          guests: 2,
-          rooms: 1
-        });
-        
-        if (dubaiHotels.data && dubaiHotels.data.length > 0) {
-          // Transform external API data to our format
-          const transformedHotels = dubaiHotels.data.map((hotel: any, index: number) => ({
-            id: hotel.hotel_id || `external-${index}`,
-            name: hotel.hotel_name || 'Hotel',
-            location: 'Dubai, UAE',
-            address: hotel.address || 'Dubai, UAE',
-            description: hotel.hotel_name + ' - ' + (hotel.review_score_word || 'Excellent hotel'),
-            price_per_night: Math.round(hotel.min_total_price || 200),
-            available_rooms: Math.floor(Math.random() * 50) + 10,
-            amenities: ['Free WiFi', 'Air Conditioning', 'Room Service'],
-            rating: hotel.review_score ? hotel.review_score / 2 : 4.0,
-            images: hotel.main_photo_url ? [hotel.main_photo_url] : ['https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=500&q=80']
-          }));
+      // Get dates for search (7 days from now for better availability)
+      const checkIn = new Date();
+      checkIn.setDate(checkIn.getDate() + 7);
+      const checkOut = new Date();
+      checkOut.setDate(checkOut.getDate() + 8);
+      
+      const checkInDate = checkIn.toISOString().split('T')[0];
+      const checkOutDate = checkOut.toISOString().split('T')[0];
+      
+      let allHotels: Hotel[] = [];
+      
+      // Try to load hotels from each popular destination
+      for (const destination of popularDestinations) {
+        try {
+          const result = await tripyverseAPI.hotels.search({
+            city_name: destination.city,
+            country_name: destination.country,
+            check_in_date: checkInDate,
+            check_out_date: checkOutDate,
+            rooms: [{ adults: 2, children: 0 }],
+            nationality: 'IN',
+            currency: 'USD',
+            max_result: 25
+          });
           
-          setHotels(transformedHotels);
-          console.log(`✅ Loaded ${transformedHotels.length} hotels from external API`);
-          return;
+          if (result.success && result.hotels && result.hotels.length > 0) {
+            // Take top 3 hotels from each destination
+            allHotels = [...allHotels, ...result.hotels.slice(0, 3)];
+            console.log(`✅ Loaded ${result.hotels.length} hotels from ${destination.city}`);
+          }
+        } catch (destinationError) {
+          console.log(`⚠️ No hotels found for ${destination.city}, ${destination.country}`);
         }
-      } catch (externalError) {
-        console.log('⚠️ External hotel API also failed');
       }
       
-      // No hotels found from any source
-      setHotels([]);
-      toast.error('No hotels available. Please try again later or contact support.');
+      if (allHotels.length > 0) {
+        setHotels(allHotels);
+        setIsSearchResult(false);
+        setCurrentSearch('Popular Destinations - Live from TravelNext');
+        console.log(`✅ Total hotels loaded: ${allHotels.length}`);
+      } else {
+        setHotels([]);
+        setCurrentSearch('');
+        console.log('❌ No hotels available from TravelNext API');
+        toast.error('No hotels available. Please try a manual search.');
+      }
       
     } catch (error) {
-      console.error('Error loading hotels:', error);
+      console.error('Error loading popular hotels:', error);
       setHotels([]);
-      toast.error('Failed to load hotels. Please check your connection and try again.');
+      toast.error('Failed to load hotels. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -127,81 +124,55 @@ const HotelsPage: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!searchParams.check_in || !searchParams.check_out) {
-      toast.error('Please select check-in and check-out dates');
+    if (!searchParams.city_name || !searchParams.check_in_date || !searchParams.check_out_date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate dates
+    const checkIn = new Date(searchParams.check_in_date);
+    const checkOut = new Date(searchParams.check_out_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+      toast.error('Check-in date cannot be in the past');
+      return;
+    }
+
+    if (checkOut <= checkIn) {
+      toast.error('Check-out date must be after check-in date');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('🔍 Searching hotels:', searchParams);
+      console.log('🔍 Searching TripyVerse hotels:', searchParams);
       
-      // First try backend API search
-      try {
-        const response = await hotelsAPI.search(searchParams);
-        if (response.data && response.data.length > 0) {
-          setHotels(response.data);
-          toast.success(`Found ${response.data.length} hotels from our inventory`);
-          return;
-        }
-      } catch (backendError) {
-        console.log('⚠️ Backend hotel search failed, trying external APIs...');
+      // Search using real TravelNext API
+      const result = await tripyverseAPI.hotels.search(searchParams);
+      
+      if (result.success && result.hotels && result.hotels.length > 0) {
+        setHotels(result.hotels);
+        setIsSearchResult(true);
+        setSearchMetadata(result.search_metadata);
+        setCurrentSearch(`${searchParams.city_name}, ${searchParams.country_name}`);
+        toast.success(`Found ${result.hotels.length} real-time hotels via TravelNext!`);
+        console.log(`✅ Found ${result.hotels.length} hotels from TravelNext API`);
+      } else {
+        setHotels([]);
+        setIsSearchResult(true);
+        setSearchMetadata(null);
+        setCurrentSearch(`${searchParams.city_name}, ${searchParams.country_name}`);
+        toast.error(result.error || `No hotels found for ${searchParams.city_name}. Try different dates or locations.`);
       }
       
-      // Try external APIs
-      try {
-        let externalResults;
-        
-        if (searchParams.location.toLowerCase().includes('dubai') || !searchParams.location) {
-          // Search Dubai specifically
-          externalResults = await realHotelAPI.searchDubaiHotels({
-            checkIn: searchParams.check_in,
-            checkOut: searchParams.check_out,
-            guests: parseInt(searchParams.guests),
-            rooms: parseInt(searchParams.rooms)
-          });
-        } else {
-          // Search by location
-          externalResults = await realHotelAPI.searchHotels({
-            location: searchParams.location,
-            checkIn: searchParams.check_in,
-            checkOut: searchParams.check_out,
-            guests: parseInt(searchParams.guests),
-            rooms: parseInt(searchParams.rooms)
-          });
-        }
-        
-        if (externalResults.data && externalResults.data.length > 0) {
-          // Transform external API data to our format
-          const transformedHotels = externalResults.data.map((hotel: any, index: number) => ({
-            id: hotel.hotel_id || `external-${index}`,
-            name: hotel.hotel_name || 'Hotel',
-            location: searchParams.location || 'Dubai, UAE',
-            address: hotel.address || searchParams.location || 'Dubai, UAE',
-            description: hotel.hotel_name + ' - ' + (hotel.review_score_word || 'Excellent hotel'),
-            price_per_night: Math.round(hotel.min_total_price / calculateNights() || 200),
-            available_rooms: 10,
-            amenities: ['Free WiFi', 'Air Conditioning', 'Room Service'],
-            rating: hotel.review_score ? hotel.review_score / 2 : 4.0,
-            images: hotel.main_photo_url ? [hotel.main_photo_url] : ['https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=500&q=80']
-          }));
-          
-          setHotels(transformedHotels);
-          toast.success(`Found ${transformedHotels.length} hotels from external partners`);
-          return;
-        }
-      } catch (externalError) {
-        console.log('⚠️ External hotel API search also failed');
-      }
-      
-      // No hotels found from any source
+    } catch (error: any) {
+      console.error('🚫 TripyVerse hotel search error:', error);
       setHotels([]);
-      toast.error(`No hotels found for your search criteria. Try different dates or locations.`);
-      
-    } catch (error) {
-      console.error('Search error:', error);
-      setHotels([]);
-      toast.error('Search failed. Please check your connection and try again.');
+      setIsSearchResult(true);
+      setCurrentSearch(`${searchParams.city_name}, ${searchParams.country_name}`);
+      toast.error(error.message || 'Search failed. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -216,93 +187,104 @@ const HotelsPage: React.FC = () => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-
+    
     for (let i = 0; i < fullStars; i++) {
       stars.push(<StarIconSolid key={i} className="h-4 w-4 text-yellow-400" />);
     }
-
+    
     if (hasHalfStar) {
       stars.push(<StarIcon key="half" className="h-4 w-4 text-yellow-400" />);
     }
-
+    
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(<StarIcon key={`empty-${i}`} className="h-4 w-4 text-gray-300" />);
     }
-
+    
     return stars;
   };
 
-  const getAmenityIcon = (amenity: string) => {
-    const amenityLower = amenity.toLowerCase();
-    if (amenityLower.includes('wifi')) return <WifiIcon className="h-4 w-4" />;
-    if (amenityLower.includes('pool')) return <SwatchIcon className="h-4 w-4" />;
-    if (amenityLower.includes('parking')) return <TruckIcon className="h-4 w-4" />;
-    return <HomeIcon className="h-4 w-4" />;
-  };
-
-  const calculateNights = () => {
-    if (!searchParams.check_in || !searchParams.check_out) return 1;
-    const checkIn = new Date(searchParams.check_in);
-    const checkOut = new Date(searchParams.check_out);
-    const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays || 1;
+  const updateRoomConfiguration = (adults: number, children: number) => {
+    setSearchParams({
+      ...searchParams,
+      rooms: [{ adults, children }]
+    });
   };
 
   return (
     <div className="min-h-screen bg-white">
       
-      {/* Modern Header with Red Theme */}
+      {/* TripyVerse Hero Header with Cosmic Theme */}
       <div className="relative hero-gradient py-20 overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute top-10 left-10 w-32 h-32 bg-red-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
         <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
-        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-red-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-float floating-element"></div>
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-indigo-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-float floating-element"></div>
         
         <div className="max-w-7xl mx-auto mobile-container relative z-10">
           <div className="text-center animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Luxury Hotel Booking Experience
-            </div>
             <h1 className="mobile-heading text-5xl md:text-7xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
-              Find Your Perfect 
-              <span className="gradient-text-red block">Stay</span>
+              Hotel Universe in 
+              <span className="gradient-text-cosmic block">TripyVerse</span>
             </h1>
-            <p className="mobile-text text-xl text-gray-600 font-medium max-w-2xl mx-auto animate-slide-up">
-              🏨 Discover luxury hotels and resorts with real-time availability
+            <p className="mobile-text text-xl text-gray-600 font-medium max-w-3xl mx-auto animate-slide-up">
+              🏨 Discover extraordinary accommodations across the universe with real-time availability and instant booking
             </p>
+            <div className="mt-6 flex justify-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <ShieldCheckIcon className="h-4 w-4 text-green-600" />
+                <span className="font-semibold text-gray-700">Real-time Rates</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <StarIcon className="h-4 w-4 text-yellow-500" />
+                <span className="font-semibold text-gray-700">Instant Booking</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <GlobeAltIcon className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-gray-700">Global Hotels</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Modern Search Form */}
+      {/* TripyVerse Search Form */}
       <div className="max-w-7xl mx-auto mobile-container -mt-16 relative z-20">
         <div className="glass-card mobile-card-perfect red-shadow animate-scale-in" style={{animationDelay: '0.3s'}}>
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
+          <form onSubmit={handleSearch} className="space-y-6 p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Destination</label>
                 <div className="relative">
                   <MapPinIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-red-500" />
                   <input
                     type="text"
-                    placeholder="Where are you going?"
-                    value={searchParams.location}
-                    onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
-                    className="input-field pl-12 hover:shadow-red-500/20"
+                    placeholder="City name (e.g. Mumbai)"
+                    value={searchParams.city_name}
+                    onChange={(e) => setSearchParams({...searchParams, city_name: e.target.value})}
+                    className="input-field pl-12 hover:shadow-purple-500/20"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Country</label>
+                <input
+                  type="text"
+                  placeholder="Country (e.g. India)"
+                  value={searchParams.country_name}
+                  onChange={(e) => setSearchParams({...searchParams, country_name: e.target.value})}
+                  className="input-field hover:shadow-purple-500/20"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Check-in</label>
                 <input
                   type="date"
-                  value={searchParams.check_in}
-                  onChange={(e) => setSearchParams({...searchParams, check_in: e.target.value})}
-                  className="input-field hover:shadow-red-500/20"
+                  value={searchParams.check_in_date}
+                  onChange={(e) => setSearchParams({...searchParams, check_in_date: e.target.value})}
+                  className="input-field hover:shadow-purple-500/20"
                 />
               </div>
 
@@ -310,167 +292,178 @@ const HotelsPage: React.FC = () => {
                 <label className="block text-sm font-bold text-gray-700 mb-2">Check-out</label>
                 <input
                   type="date"
-                  value={searchParams.check_out}
-                  onChange={(e) => setSearchParams({...searchParams, check_out: e.target.value})}
-                  className="input-field hover:shadow-red-500/20"
+                  value={searchParams.check_out_date}
+                  onChange={(e) => setSearchParams({...searchParams, check_out_date: e.target.value})}
+                  className="input-field hover:shadow-purple-500/20"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Guests</label>
-                <select
-                  value={searchParams.guests}
-                  onChange={(e) => setSearchParams({...searchParams, guests: e.target.value})}
-                  className="input-field hover:shadow-red-500/20"
-                >
-                  {[1,2,3,4,5,6,7,8].map(num => (
-                    <option key={num} value={num}>{num} {num === 1 ? 'guest' : 'guests'}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Rooms</label>
-                <select
-                  value={searchParams.rooms}
-                  onChange={(e) => setSearchParams({...searchParams, rooms: e.target.value})}
-                  className="input-field hover:shadow-red-500/20"
-                >
-                  {[1,2,3,4,5].map(num => (
-                    <option key={num} value={num}>{num} {num === 1 ? 'room' : 'rooms'}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Adults</label>
+                  <select
+                    value={searchParams.rooms[0]?.adults || 2}
+                    onChange={(e) => updateRoomConfiguration(parseInt(e.target.value), searchParams.rooms[0]?.children || 0)}
+                    className="input-field text-sm hover:shadow-purple-500/20"
+                  >
+                    {[1,2,3,4,5,6,7,8].map(num => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Child</label>
+                  <select
+                    value={searchParams.rooms[0]?.children || 0}
+                    onChange={(e) => updateRoomConfiguration(searchParams.rooms[0]?.adults || 2, parseInt(e.target.value))}
+                    className="input-field text-sm hover:shadow-purple-500/20"
+                  >
+                    {[0,1,2,3,4,5,6,7,8].map(num => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary btn-mobile-perfect btn-glow flex items-center space-x-3 text-lg shadow-2xl red-glow btn-press"
+                className="btn-primary btn-mobile-perfect btn-glow flex items-center space-x-3 text-lg shadow-2xl red-glow btn-press bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
               >
                 <MagnifyingGlassIcon className="h-6 w-6" />
-                <span>{loading ? 'Searching... 🏨' : 'Search Hotels 🏨'}</span>
+                <span>{loading ? 'Searching Universe... 🏨' : 'Search Hotels 🏨'}</span>
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      {/* Modern Hotel Results */}
+      {/* Hotel Results */}
       <div className="max-w-7xl mx-auto mobile-container section-spacing">
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Available Hotels</h2>
-          <div className="inline-flex items-center bg-red-100 text-gray-900 px-6 py-3 rounded-full text-sm font-bold shadow-lg red-shadow">
-            🏨 Premium accommodations worldwide
-          </div>
+          
+          {isSearchResult && currentSearch && (
+            <div className="glass-card inline-flex items-center space-x-4 px-6 py-3 mb-6 red-shadow animate-scale-in">
+              <p className="text-sm text-gray-700 font-medium">Search results for: <span className="gradient-text-cosmic font-bold">{currentSearch}</span></p>
+              <button
+                onClick={() => {
+                  setIsSearchResult(false);
+                  setCurrentSearch('');
+                  setSearchMetadata(null);
+                  loadPopularHotels();
+                }}
+                className="btn-outline px-4 py-1 text-xs hover-lift"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+          
         </div>
         
         {loading ? (
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent mx-auto"></div>
-            <p className="mt-6 text-gray-600 text-lg font-medium">Searching for hotels...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent mx-auto"></div>
+            <p className="mt-6 text-gray-600 text-lg font-medium">Searching the TripyVerse...</p>
           </div>
         ) : hotels.length === 0 ? (
           <div className="text-center py-16 animate-scale-in">
-            <BuildingOfficeIcon className="h-20 w-20 text-gray-400 mx-auto mb-6" />
-            <p className="text-gray-600 text-xl font-medium">No hotels found. Try adjusting your search criteria.</p>
+            <BuildingOffice2Icon className="h-20 w-20 text-gray-400 mx-auto mb-6" />
+            <p className="text-gray-600 text-xl font-medium">No hotels found in the universe. Try adjusting your search criteria.</p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {hotels.map((hotel, index) => (
-              <div key={hotel.id} className="glass-card mobile-card card-hover red-shadow group animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="flex flex-col lg:flex-row">
-                  {/* Hotel Image */}
-                  <div className="lg:w-2/5">
-                    <div className="h-64 lg:h-full bg-gradient-to-br from-red-100 to-red-200 relative overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none">
-                      <img
-                        src={hotel.images[0] || 'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?w=500&h=500&fit=crop'}
-                        alt={hotel.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                      <div className="absolute top-4 left-4 glass-card px-3 py-2 shadow-lg">
-                        <div className="flex items-center space-x-1">
-                          {renderStars(hotel.rating)}
-                          <span className="text-sm font-bold text-gray-900 ml-2">{hotel.rating}</span>
-                        </div>
-                      </div>
-                      <div className="absolute top-4 right-4">
-                        <div className="red-gradient-bg text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse-red">
-                          Premium
-                        </div>
+              <div key={`${hotel.hotel_code}-${index}`} className="glass-card mobile-card card-hover red-shadow group animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                {/* Hotel Image */}
+                {hotel.images && hotel.images.length > 0 && (
+                  <div className="relative h-64 mb-6 rounded-2xl overflow-hidden">
+                    <img 
+                      src={hotel.images[0]} 
+                      alt={hotel.hotel_name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/api/placeholder/400/300';
+                      }}
+                    />
+                    <div className="absolute top-4 right-4">
+                      <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
+                        {renderStars(hotel.rating)}
+                        <span className="ml-2 text-sm font-bold text-gray-700">{hotel.rating}</span>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Hotel Info */}
-                  <div className="lg:w-3/5 p-6 lg:p-8 flex flex-col justify-between">
-                    <div>
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4">
-                        <div className="mb-4 lg:mb-0">
-                          <h3 className="text-2xl lg:text-3xl font-black text-gray-900 mb-2">{hotel.name}</h3>
-                          <div className="flex items-center text-gray-600 mb-3">
-                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-2">
-                              <MapPinIcon className="h-3 w-3 text-white" />
-                            </div>
-                            <span className="font-semibold">{hotel.location}</span>
-                          </div>
-                        </div>
-                        <div className="text-left lg:text-right">
-                          <div className="gradient-text-red text-3xl lg:text-4xl font-black mb-1">
-                            {formatAEDCurrency(hotel.price_per_night)}
-                          </div>
-                          <p className="text-sm text-gray-600 font-medium">per night</p>
-                          {searchParams.check_in && searchParams.check_out && (
-                            <div className="mt-2 glass-card px-3 py-1 inline-block">
-                              <p className="text-sm font-bold text-gray-900">
-                                {formatAEDCurrency(hotel.price_per_night * calculateNights())} total
-                              </p>
-                              <p className="text-xs text-gray-600">({calculateNights()} nights)</p>
-                            </div>
-                          )}
-                        </div>
+                {/* Hotel Info */}
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-black text-gray-900 mb-2">{hotel.hotel_name}</h3>
+                      <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                        <MapPinIcon className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium">{hotel.address}</span>
                       </div>
-
-                      <p className="text-gray-700 mb-6 leading-relaxed font-medium">{hotel.description}</p>
-
-                      {/* Amenities */}
-                      <div className="mb-6">
-                        <div className="flex flex-wrap gap-3">
-                          {hotel.amenities.slice(0, 5).map((amenity, index) => (
-                            <div key={index} className="flex items-center space-x-2 bg-red-100 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-sm hover-lift">
-                              {getAmenityIcon(amenity)}
-                              <span>{amenity}</span>
-                            </div>
-                          ))}
-                          {hotel.amenities.length > 5 && (
-                            <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-bold">
-                              +{hotel.amenities.length - 5} more amenities
-                            </div>
-                          )}
-                        </div>
+                      {hotel.description && (
+                        <p className="text-gray-600 text-sm line-clamp-2">{hotel.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-black gradient-text-cosmic">
+                        {formatTripyverseCurrency(hotel.total_price, hotel.currency)}
                       </div>
+                      <p className="text-sm text-gray-600 font-medium">per night</p>
+                    </div>
+                  </div>
 
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-                        <div className="flex items-center space-x-2 text-gray-700">
-                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                            <UserGroupIcon className="h-3 w-3 text-white" />
+                  {/* Hotel Amenities */}
+                  {hotel.amenities && hotel.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {hotel.amenities.slice(0, 6).map((amenity, amenityIndex) => (
+                        <span key={amenityIndex} className="inline-flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
+                          {amenity}
+                        </span>
+                      ))}
+                      {hotel.amenities.length > 6 && (
+                        <span className="inline-flex items-center bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
+                          +{hotel.amenities.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Room Information */}
+                  {hotel.rooms && hotel.rooms.length > 0 && (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-xl">
+                      <h4 className="font-bold text-gray-900 mb-2">Available Rooms</h4>
+                      <div className="space-y-2">
+                        {hotel.rooms.slice(0, 2).map((room, roomIndex) => (
+                          <div key={roomIndex} className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">{room.room_name}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-500">{room.board_type}</span>
+                              <span className="font-bold text-purple-600">{formatTripyverseCurrency(room.price, room.currency)}</span>
+                            </div>
                           </div>
-                          <span className="font-semibold">{hotel.available_rooms} rooms available</span>
-                        </div>
-                        
-                        <button
-                          onClick={() => handleBookHotel(hotel)}
-                          className="btn-primary px-8 py-3 text-lg font-bold shadow-2xl red-glow w-full sm:w-auto hover-lift btn-press group"
-                        >
-                          <span className="flex items-center justify-center space-x-2">
-                            <span>Book Now 🏨</span>
-                            <ArrowRightIcon className="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" />
-                          </span>
-                        </button>
+                        ))}
                       </div>
                     </div>
+                  )}
+
+                  {/* Book Button */}
+                  <div className="pt-4">
+                    <button
+                      onClick={() => handleBookHotel(hotel)}
+                      className="btn-primary px-8 py-4 text-lg font-bold shadow-2xl red-glow w-full hover-lift btn-press group bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                    >
+                      <span className="flex items-center justify-center space-x-2">
+                        <span>Book Hotel</span>
+                        <ArrowRightIcon className="h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>

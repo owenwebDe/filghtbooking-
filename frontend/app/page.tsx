@@ -348,9 +348,9 @@ export default function HomePage() {
               {/* LEFT SIDE - Primary text area (60% of image width available) */}
               <div className="text-left animate-fade-in lg:pr-8 mt-4 md:mt-8">
                 <h1 className="mobile-heading text-4xl md:text-6xl lg:text-7xl font-black mb-8 text-white leading-[0.9] tracking-tight text-shadow-lg animate-scale-in">
-                  Fly Smarter,
-                  <span className="block text-white drop-shadow-2xl">
-                    Travel Faster
+                  Welcome to
+                  <span className="gradient-text-red block text-white drop-shadow-2xl">
+                    TripyVerse
                   </span>
                 </h1>
                 
@@ -358,11 +358,11 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{animationDelay: '0.3s'}}>
                   <Link href="/flights" className="btn-primary btn-mobile-perfect flex items-center justify-center text-lg shadow-2xl red-glow hover-lift btn-press group">
                     <AirplaneIcon className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                    <span>Book Flights ✈️</span>
+                    <span>Book Flights</span>
                   </Link>
                   <Link href="/packages" className="glass-card bg-white/90 backdrop-blur-sm text-red-600 hover:bg-white btn-mobile-perfect flex items-center justify-center text-lg font-bold shadow-2xl border-2 border-white/50 hover:border-red-300 transition-all hover-lift btn-press group">
                     <GlobeAltIcon className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
-                    <span>Explore Packages 🌍</span>
+                    <span>Explore Packages</span>
                   </Link>
                 </div>
               </div>
@@ -380,13 +380,13 @@ export default function HomePage() {
         {/* Modern Search Card - positioned properly to avoid covering buttons */}
         <div className="absolute bottom-4 left-0 right-0 z-20">
           <div className="max-w-5xl mx-auto mobile-container">
-            <div className="glass-card bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-4 md:p-6 border border-red-100 card-hover red-shadow-lg animate-scale-in">
+            <div className="glass-card bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-red-100 card-hover red-shadow-lg animate-scale-in">
               {/* Search Type Tabs */}
               <div className="flex flex-wrap justify-center border-b border-red-100 mb-4">
                 {[
-                  { type: 'flights', icon: AirplaneIcon, label: 'Flights', emoji: '✈️' },
-                  { type: 'hotels', icon: BuildingLibraryIcon, label: 'Hotels', emoji: '🏨' },
-                  { type: 'packages', icon: GlobeAltIcon, label: 'Packages', emoji: '📦' }
+                  { type: 'flights', icon: AirplaneIcon, label: 'Flights', emoji: '' },
+                  { type: 'hotels', icon: BuildingLibraryIcon, label: 'Hotels', emoji: '' },
+                  { type: 'packages', icon: GlobeAltIcon, label: 'Packages', emoji: '' }
                 ].map(({ type, icon: Icon, label, emoji }) => (
                   <button
                     key={type}
@@ -409,13 +409,13 @@ export default function HomePage() {
                 {searchType === 'flights' && (
                   <div className="search-form-grid grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="relative">
-                      <label className="block text-xs font-bold text-gray-700 mb-1">✈️ From</label>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">From</label>
                       <input
                         type="text"
                         placeholder="Departure city"
                         value={searchData.flights.from}
                         onChange={(e) => handleInputChange('from', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                       {showSuggestions && suggestions.length > 0 && (
@@ -433,13 +433,13 @@ export default function HomePage() {
                       )}
                     </div>
                     <div className="relative">
-                      <label className="block text-xs font-bold text-gray-700 mb-1">🎯 To</label>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">To</label>
                       <input
                         type="text"
                         placeholder="Destination city"
                         value={searchData.flights.to}
                         onChange={(e) => handleInputChange('to', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                     </div>
@@ -449,7 +449,7 @@ export default function HomePage() {
                         type="date"
                         value={searchData.flights.date}
                         onChange={(e) => handleInputChange('date', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                     </div>
@@ -458,7 +458,7 @@ export default function HomePage() {
                       <select 
                         value={searchData.flights.passengers}
                         onChange={(e) => handleInputChange('passengers', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                       >
                         <option value="1">1 Passenger</option>
                         <option value="2">2 Passengers</option>
@@ -471,13 +471,13 @@ export default function HomePage() {
                 {searchType === 'hotels' && (
                   <div className="search-form-grid grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="relative">
-                      <label className="block text-xs font-bold text-gray-700 mb-1">🏨 Location</label>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Location</label>
                       <input
                         type="text"
                         placeholder="Where to stay?"
                         value={searchData.hotels.location}
                         onChange={(e) => handleInputChange('location', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                       {showSuggestions && suggestions.length > 0 && (
@@ -500,7 +500,7 @@ export default function HomePage() {
                         type="date"
                         value={searchData.hotels.checkin}
                         onChange={(e) => handleInputChange('checkin', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                     </div>
@@ -510,7 +510,7 @@ export default function HomePage() {
                         type="date"
                         value={searchData.hotels.checkout}
                         onChange={(e) => handleInputChange('checkout', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                     </div>
@@ -519,7 +519,7 @@ export default function HomePage() {
                       <select 
                         value={searchData.hotels.guests}
                         onChange={(e) => handleInputChange('guests', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                       >
                         <option value="1">1 Guest</option>
                         <option value="2">2 Guests</option>
@@ -532,13 +532,13 @@ export default function HomePage() {
                 {searchType === 'packages' && (
                   <div className="search-form-grid grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="relative">
-                      <label className="block text-xs font-bold text-gray-700 mb-1">📦 Destination</label>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Destination</label>
                       <input
                         type="text"
                         placeholder="Where to go?"
                         value={searchData.packages.destination}
                         onChange={(e) => handleInputChange('destination', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                       {showSuggestions && suggestions.length > 0 && (
@@ -561,7 +561,7 @@ export default function HomePage() {
                         type="date"
                         value={searchData.packages.departure}
                         onChange={(e) => handleInputChange('departure', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                         required
                       />
                     </div>
@@ -570,7 +570,7 @@ export default function HomePage() {
                       <select 
                         value={searchData.packages.duration}
                         onChange={(e) => handleInputChange('duration', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                       >
                         <option value="3-5 days">3-5 days</option>
                         <option value="6-10 days">6-10 days</option>
@@ -582,7 +582,7 @@ export default function HomePage() {
                       <select 
                         value={searchData.packages.travelers}
                         onChange={(e) => handleInputChange('travelers', e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all duration-300 bg-white shadow-sm hover:shadow-md text-sm"
+                        className="w-full px-3 py-2 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white shadow-sm hover:shadow-purple-500/20 text-sm"
                       >
                         <option value="1">1 Traveler</option>
                         <option value="2">2 Travelers</option>
@@ -598,7 +598,7 @@ export default function HomePage() {
                     className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/30 flex items-center text-sm"
                   >
                     <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
-                    <span>Search {searchType === 'flights' ? 'Flights ✈️' : searchType === 'hotels' ? 'Hotels 🏨' : 'Packages 📦'}</span>
+                    <span>Search {searchType === 'flights' ? 'Flights' : searchType === 'hotels' ? 'Hotels' : 'Packages'}</span>
                   </button>
                 </div>
               </form>
@@ -611,16 +611,12 @@ export default function HomePage() {
       <section className="section-spacing bg-white pt-32">
         <div className="max-w-7xl mx-auto mobile-container">
           <div className="text-center mb-20 animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Handpicked Premium Destinations
-            </div>
             <h2 className="mobile-heading text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
               Popular 
               <span className="gradient-text-red">Destinations</span>
             </h2>
             <p className="mobile-text text-xl text-gray-600 max-w-3xl mx-auto font-medium animate-slide-up">
-              🌍 Discover amazing places around the world with our handpicked destinations and exclusive deals
+              Discover amazing places around the world with our handpicked destinations and exclusive deals
             </p>
           </div>
 
@@ -646,7 +642,7 @@ export default function HomePage() {
                         </div>
                         <div className="absolute bottom-4 left-4">
                           <div className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-bold">
-                            ⭐ Featured
+                            Featured
                           </div>
                         </div>
                       </div>
@@ -655,8 +651,8 @@ export default function HomePage() {
                         <p className="text-gray-600 text-sm mb-4 font-medium">{destination.description}</p>
                         <div className="flex items-center justify-between">
                           <p className="gradient-text-red font-black text-lg">{destination.price}</p>
-                          <button className="btn-primary px-6 py-2 text-sm font-bold shadow-lg red-glow hover-lift btn-press">
-                            🌍 Explore
+                          <button className="px-6 py-2 text-sm font-bold shadow-lg cosmic-glow hover-lift btn-press bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl transition-all">
+                            Explore
                           </button>
                         </div>
                       </div>
@@ -676,20 +672,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Luxury Hotels Slider Section */}
-      <section className="section-spacing subtle-red-gradient">
+      {/* TripyVerse Luxury Hotels Section */}
+      <section className="section-spacing subtle-cosmic-gradient">
         <div className="max-w-7xl mx-auto mobile-container">
           <div className="text-center mb-20 animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
+            <div className="inline-flex items-center bg-gradient-to-r from-purple-100 to-blue-100 text-gray-900 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
               <SparklesIcon className="h-5 w-5 mr-2" />
-              Luxury Travel Experiences
+              TripyVerse Hotel Universe
             </div>
             <h2 className="mobile-heading text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
-              Luxury 
+              Cosmic 
               <span className="gradient-text-red">Accommodations</span>
             </h2>
             <p className="mobile-text text-xl text-gray-600 max-w-3xl mx-auto font-medium animate-slide-up">
-              🏨 Stay in the world's most beautiful hotels and resorts, carefully selected for exceptional service
+              Discover luxury hotels across the universe with real-time availability and instant booking
             </p>
           </div>
 
@@ -715,20 +711,20 @@ export default function HomePage() {
                       </div>
                       <div className="absolute top-4 right-4">
                         <div className="red-gradient-bg text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse-red">
-                          🏨 Premium
+                          Premium
                         </div>
                       </div>
                     </div>
                     <div className="p-6">
                       <h3 className="text-xl font-black text-gray-900 mb-3">{hotel.name}</h3>
                       <p className="text-gray-600 mb-4 flex items-center text-sm font-medium">
-                        <MapPinIcon className="h-4 w-4 mr-2 text-red-500" />
+                        <MapPinIcon className="h-4 w-4 mr-2 text-purple-500" />
                         {hotel.location}
                       </p>
                       <div className="flex justify-between items-center">
                         <span className="text-xl font-black gradient-text-red">{hotel.price}</span>
-                        <button className="btn-primary px-6 py-3 text-sm font-bold shadow-lg red-glow hover-lift btn-press">
-                          🏨 Book Now
+                        <button className="px-6 py-3 text-sm font-bold shadow-lg cosmic-glow hover-lift btn-press bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl transition-all">
+                          Book Now
                         </button>
                       </div>
                     </div>
@@ -739,31 +735,27 @@ export default function HomePage() {
             
             {/* Scroll indicators */}
             <div className="text-center mt-8">
-              <div className="glass-card bg-red-50 inline-block px-6 py-3 rounded-full border border-red-200 red-shadow">
-                <p className="text-red-600 text-sm font-bold">← Scroll to explore more accommodations →</p>
+              <div className="glass-card bg-purple-50 inline-block px-6 py-3 rounded-full border border-purple-200 red-shadow">
+                <p className="text-purple-600 text-sm font-bold">← Scroll to explore more accommodations →</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-gradient-to-br from-red-50 via-white to-red-50 relative overflow-hidden">
+      {/* TripyVerse Features Section */}
+      <section className="py-20 subtle-cosmic-gradient relative overflow-hidden">
         {/* Animated Background Elements */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-red-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float floating-element"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow floating-element"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16 animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Premium Travel Benefits
-            </div>
             <h2 className="section-title text-4xl md:text-5xl font-black text-gray-900 mb-6 animate-scale-in">
-              Why Choose <span className="gradient-text-red">FlightBooking?</span>
+              Why Choose <span className="gradient-text-red">TripyVerse?</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-medium animate-slide-up">
-              🌟 Experience travel planning redefined with our premium features and exceptional service
+              Experience the ultimate travel universe with real-time booking and cosmic service
             </p>
           </div>
 
@@ -775,7 +767,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-2xl font-black text-gray-900 mb-4">🔒 Secure & Trusted</h3>
                 <p className="text-gray-600 leading-relaxed font-medium">
-                  Your safety is our priority. All transactions are encrypted and protected with industry-leading security measures.
+                  Your safety is our priority. All TripyVerse transactions are encrypted with industry-leading security.
                 </p>
               </div>
             </div>
@@ -785,9 +777,9 @@ export default function HomePage() {
                 <div className="relative w-20 h-20 mx-auto mb-6 red-gradient-bg rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform animate-pulse-red">
                   <ClockIcon className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 mb-4">⏰ 24/7 Support</h3>
+                <h3 className="text-2xl font-black text-gray-900 mb-4">⏰ Real-Time Support</h3>
                 <p className="text-gray-600 leading-relaxed font-medium">
-                  Our dedicated support team is available around the clock to assist you with any travel needs or concerns.
+                  TripyVerse support team is available across the universe to assist with any travel needs.
                 </p>
               </div>
             </div>
@@ -797,9 +789,9 @@ export default function HomePage() {
                 <div className="relative w-20 h-20 mx-auto mb-6 red-gradient-bg rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform animate-pulse-red">
                   <StarIcon className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 mb-4">💰 Best Price Guarantee</h3>
+                <h3 className="text-2xl font-black text-gray-900 mb-4">Best Universe Rates</h3>
                 <p className="text-gray-600 leading-relaxed font-medium">
-                  Find a lower price elsewhere? We'll match it and give you an additional 5% off your booking.
+                  Real-time TravelNext API ensures you get the best rates across the entire travel universe.
                 </p>
               </div>
             </div>
@@ -816,16 +808,12 @@ export default function HomePage() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-20 animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Authentic Traveler Reviews
-            </div>
             <h2 className="mobile-heading text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 tracking-tight animate-scale-in">
               What Our 
               <span className="gradient-text-red">Travelers Say</span>
             </h2>
             <p className="mobile-text text-xl text-gray-600 max-w-3xl mx-auto font-medium animate-slide-up">
-              ⭐ Read authentic reviews from millions of satisfied customers who've trusted us with their premium travel experiences
+              Read authentic reviews from millions of satisfied customers who've trusted us with their premium travel experiences
             </p>
           </div>
 
@@ -843,7 +831,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-black text-gray-900 mb-2">Sarah Martinez</h3>
-                  <p className="text-red-600 font-bold mb-3">✈️ Business Traveler • Premium Member</p>
+                  <p className="text-red-600 font-bold mb-3">Business Traveler • Premium Member</p>
                   <div className="flex items-center space-x-2">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
@@ -854,14 +842,14 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="glass-card bg-red-50 px-4 py-2 rounded-full border border-red-200">
-                  <span className="text-red-600 font-bold text-sm">🎯 Featured Review</span>
+                  <span className="text-red-600 font-bold text-sm">Featured Review</span>
                 </div>
               </div>
               <blockquote className="text-xl md:text-2xl text-gray-700 leading-relaxed font-medium italic mb-6">
                 "FlightBooking transformed my European business trip into a seamless experience. The booking process was incredibly intuitive, and their premium customer service was exceptional when I needed to make last-minute changes. The attention to detail and personalized service made all the difference!"
               </blockquote>
               <div className="glass-card bg-red-50 inline-block px-6 py-3 rounded-xl border border-red-200">
-                <p className="text-red-700 font-bold text-sm">💰 Saved $1,200 on premium business class flights to 5 European cities</p>
+                <p className="text-red-700 font-bold text-sm">Saved $1,200 on premium business class flights to 5 European cities</p>
               </div>
             </div>
 
@@ -1023,23 +1011,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-20 subtle-red-gradient relative overflow-hidden">
+      {/* TripyVerse Newsletter Section */}
+      <section className="py-20 subtle-cosmic-gradient relative overflow-hidden">
         {/* Animated Background Elements */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-red-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float floating-element"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-bounce-slow floating-element"></div>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float floating-element"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-bounce-slow floating-element"></div>
         
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="animate-fade-in">
-            <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full text-sm font-bold shadow-lg mb-6 animate-pulse-red">
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Exclusive Travel Deals
-            </div>
             <h2 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 animate-scale-in">
-              Never Miss a <span className="gradient-text-red">Deal</span>
+              Join the <span className="gradient-text-red">TripyVerse</span>
             </h2>
             <p className="text-xl mb-8 text-gray-600 leading-relaxed font-medium animate-slide-up">
-              📧 Subscribe to our newsletter and get exclusive travel deals, insider tips, and destination inspiration delivered to your inbox
+              Subscribe for exclusive deals, cosmic travel tips, and real-time updates from across the universe
             </p>
           </div>
           
@@ -1047,16 +1031,16 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <input
                 type="email"
-                placeholder="Enter your email address"
-                className="input-field flex-1 hover:shadow-red-500/20"
+                placeholder="Enter your cosmic email address"
+                className="input-field flex-1 hover:shadow-purple-500/20"
               />
-              <button className="btn-primary px-8 py-4 font-bold shadow-2xl red-glow hover-lift btn-press">
-                📧 Subscribe
+              <button className="px-8 py-4 font-bold shadow-2xl cosmic-glow hover-lift btn-press bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl transition-all">
+                Join Universe
               </button>
             </div>
             <div className="glass-card bg-white/60 backdrop-blur-sm inline-block px-4 py-2 rounded-full mt-4 border border-red-100">
               <p className="text-sm text-gray-600 font-medium">
-                ✨ Join 500,000+ travelers. No spam, unsubscribe anytime.
+                ✨ Join 500,000+ cosmic travelers. No spam, unsubscribe anytime.
               </p>
             </div>
           </div>

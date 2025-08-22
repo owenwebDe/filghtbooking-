@@ -8,8 +8,8 @@ import AuthenticatedLayout from '../components/AuthenticatedLayout';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'FlightBooking - Professional Travel Platform',
-  description: 'Book flights, hotels, and vacation packages with ease',
+  title: 'TripyVerse - Your Ultimate Travel Universe',
+  description: 'Discover the universe of travel with TripyVerse. Book flights, hotels, and vacation packages worldwide with real-time pricing and instant confirmations.',
 };
 
 export default function RootLayout({
